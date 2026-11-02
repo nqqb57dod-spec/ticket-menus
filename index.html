@@ -5,52 +5,40 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Semaine en cuisine</title>
 <meta name="description" content="Photographiez un ticket de caisse : l'app liste les ingrédients et propose les menus de la semaine.">
-<meta name="theme-color" content="#2c6a45" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#121a15" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#121a15">
+<meta name="color-scheme" content="dark">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icones/icone.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icones/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Cuisine">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <style>
   @font-face { font-family: "Bricolage Grotesque"; src: url("polices/bricolage-grotesque-latin-wght-normal.woff2") format("woff2"); font-weight: 200 800; font-display: swap; }
   @font-face { font-family: "Atkinson Hyperlegible"; src: url("polices/atkinson-hyperlegible-latin-400-normal.woff2") format("woff2"); font-weight: 400; font-display: swap; }
   @font-face { font-family: "Atkinson Hyperlegible"; src: url("polices/atkinson-hyperlegible-latin-700-normal.woff2") format("woff2"); font-weight: 700; font-display: swap; }
-  /* Mise en page : le planning d'abord. Ruban de jours, grandes cartes de repas, feuilles pour le reste. */
+  /* Mise en page : le planning d'abord. Ruban de jours, grandes cartes de repas, feuilles pour le reste.
+     Style sombre pour tous (plus doux pour les yeux), quel que soit le réglage du téléphone. */
   :root {
-    --fond: #eef3ec;        /* feuille de basilic très pâle */
-    --surface: #ffffff;
-    --encre: #18261e;
-    --doux: #56675c;
-    --trait: #d3ddd2;
-    --basilic: #2c6a45;     /* accent principal */
-    --sur-basilic: #ffffff;
-    --la: #dff0e3;          /* pastille « déjà là » */
-    --la-texte: #1d5734;
-    --acheter: #fbe6c8;     /* pastille « à acheter » (safran) */
-    --acheter-texte: #8a4a06;
-    --ombre: 0 6px 24px rgba(24, 38, 30, .14);
+    --fond: #121a15;        /* vert nuit */
+    --surface: #1b251f;
+    --encre: #e7efe9;
+    --doux: #9fb0a5;
+    --trait: #2e3b33;
+    --basilic: #6cc28f;     /* accent principal */
+    --sur-basilic: #0c1a12;
+    --la: #1f3a2a;          /* pastille « déjà là » */
+    --la-texte: #a6dfbb;
+    --acheter: #3d2c14;     /* pastille « à acheter » (safran) */
+    --acheter-texte: #f3c27a;
+    --ombre: 0 6px 24px rgba(0, 0, 0, .45);
     --titre: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
     --corps: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --fond: #121a15; --surface: #1b251f; --encre: #e7efe9; --doux: #9fb0a5; --trait: #2e3b33;
-      --basilic: #6cc28f; --sur-basilic: #0c1a12; --la: #1f3a2a; --la-texte: #a6dfbb;
-      --acheter: #3d2c14; --acheter-texte: #f3c27a; --ombre: 0 6px 24px rgba(0, 0, 0, .45);
-      color-scheme: dark;
-    }
-  }
-  :root[data-theme="dark"] {
-    --fond: #121a15; --surface: #1b251f; --encre: #e7efe9; --doux: #9fb0a5; --trait: #2e3b33;
-    --basilic: #6cc28f; --sur-basilic: #0c1a12; --la: #1f3a2a; --la-texte: #a6dfbb;
-    --acheter: #3d2c14; --acheter-texte: #f3c27a; --ombre: 0 6px 24px rgba(0, 0, 0, .45);
     color-scheme: dark;
   }
   * { box-sizing: border-box; }
-  html { color-scheme: light; }
+  html { color-scheme: dark; background: #121a15; }
   :root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
   body { margin: 0; -webkit-text-size-adjust: 100%; }
   img { max-width: 100%; }
@@ -69,7 +57,7 @@
     border-radius: 999px; padding: 4px 12px 4px 4px; font-weight: 700; font-size: .95rem; max-width: 45%; min-width: 0; }
   .profil-puce span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .initiale { flex: 0 0 auto; width: 30px; height: 30px; border-radius: 50%; display: inline-grid; place-items: center;
-    background: var(--teinte, var(--basilic)); color: #fff; font: 800 .95rem/1 var(--titre); }
+    background: var(--teinte, #2c6a45); color: #fff; font: 800 .95rem/1 var(--titre); }
   .profils { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
   .profils button.choisir { width: 100%; display: flex; align-items: center; gap: 12px; text-align: left; border: 1px solid var(--trait);
     background: var(--surface); border-radius: 14px; padding: 10px 12px; font-weight: 700; }
@@ -121,7 +109,7 @@
     box-shadow: var(--ombre); display: inline-flex; gap: 8px; align-items: center; z-index: 5; }
 
   /* Feuilles */
-  .voile { position: fixed; inset: 0; background: rgba(10, 18, 13, .45); z-index: 20; display: flex; justify-content: flex-end; }
+  .voile { position: fixed; inset: 0; background: rgba(4, 8, 6, .6); z-index: 20; display: flex; justify-content: flex-end; }
   .feuille { background: var(--fond); width: min(100%, 520px); height: 100%; overflow-y: auto; display: flex; flex-direction: column;
     padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
   .feuille.pleine { width: 100%; }
