@@ -18,6 +18,9 @@ Après la première ouverture, l'app marche sans réseau.
 
 ## Comment s'en servir
 
+Au premier lancement, la page est vierge : chacun remplit son propre profil, qui reste sur son téléphone.
+**Voir un exemple** montre une semaine FICTIVE ; **Repartir de zéro** l'efface.
+
 1. **Scanner un ticket** (bouton en bas à droite) : photo du ticket à plat et bien éclairé, puis **Lire le ticket**.
    Le texte lu peut être corrigé ; on peut aussi le coller à la main.
 2. **Utiliser ces ingrédients** : la semaine se remplit. Touchez un jour pour voir ses repas.

@@ -96,6 +96,10 @@
   .autre { justify-self: start; border: 1px solid var(--trait); background: transparent; border-radius: 10px; padding: 6px 12px; font-size: .9rem; }
   .note { font-size: .85rem; color: var(--doux); margin-top: 16px; }
   .vide { color: var(--doux); font-style: italic; }
+  .accueil { background: var(--surface); border-radius: 18px; padding: 22px 18px; box-shadow: var(--ombre); display: grid; gap: 12px; margin-top: 14px; }
+  .accueil h2 { font: 800 1.45rem/1.15 var(--titre); margin: 0; text-wrap: balance; }
+  .accueil p { margin: 0; color: var(--doux); max-width: 34em; }
+  .lien { background: none; border: 0; padding: 4px 0; color: var(--basilic); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; justify-self: start; }
 
   /* Bouton flottant */
   .fab { position: fixed; right: calc(16px + env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px));
@@ -159,12 +163,21 @@
     <button class="outil" id="ouvrir-placard" aria-haspopup="dialog">Placard <span class="compte" id="n-placard">0</span></button>
     <button class="outil" id="ouvrir-courses" aria-haspopup="dialog">Courses <span class="compte" id="n-courses">0</span></button>
   </div>
-  <p class="resume" id="resume"></p>
-  <nav class="ruban" id="ruban" aria-label="Jours de la semaine"></nav>
-  <h2 class="titre-jour" id="titre-jour"></h2>
-  <div class="repas" id="repas"></div>
-  <p class="legende"><span class="pastille la">vert</span> déjà acheté · <span class="pastille acheter">safran</span> à acheter</p>
-  <p class="note" id="note"></p>
+  <section class="accueil" id="accueil" hidden aria-labelledby="t-accueil">
+    <h2 id="t-accueil">Votre semaine est vide</h2>
+    <p>Prenez en photo votre dernier ticket de caisse. L'app propose les repas avec ce que vous avez acheté, et la liste de ce qui manque.</p>
+    <button class="principal" id="accueil-scan">Scanner un ticket</button>
+    <button class="secondaire" id="accueil-placard">Ajouter des ingrédients à la main</button>
+    <button class="lien" id="accueil-exemple">Voir un exemple</button>
+  </section>
+  <div id="planning">
+    <p class="resume" id="resume"></p>
+    <nav class="ruban" id="ruban" aria-label="Jours de la semaine"></nav>
+    <h2 class="titre-jour" id="titre-jour"></h2>
+    <div class="repas" id="repas"></div>
+    <p class="legende"><span class="pastille la">vert</span> déjà acheté · <span class="pastille acheter">safran</span> à acheter</p>
+  </div>
+  <p class="note" id="bandeau-exemple" hidden>Exemple FICTIF. <button class="lien" id="effacer-exemple">Repartir de zéro</button></p>
   <p class="note"><button class="autre" id="ouvrir-installer" aria-haspopup="dialog">Installer sur mon téléphone</button></p>
 </div>
 
@@ -323,13 +336,16 @@ const fmt = (d, o) => d.toLocaleDateString("fr-FR", o);
 function recalculer() {
   const repas = [$("midi").checked && "midi", $("soir").checked && "soir"].filter(Boolean);
   const jours = Math.min(14, Math.max(1, Number($("nb-jours").value) || 7));
-  etat.resultat = repas.length
+  etat.resultat = repas.length && etat.articles.length
     ? C.proposerMenus(etat.articles, { jours, repas, vegetarien: $("vegetarien").checked, exclues: etat.exclues })
     : { menus: [], courses: [], restes: [] };
   etat.jour = Math.min(etat.jour, jours - 1);
   toutDessiner();
 }
-function toutDessiner() { dessinerResume(); dessinerRuban(); dessinerJour(); dessinerPlacard(); dessinerCourses(); sauver(); }
+function toutDessiner() {
+  const vide = !etat.articles.length;
+  $("accueil").hidden = !vide; $("planning").hidden = vide; $("bandeau-exemple").hidden = !etat.exemple;
+  dessinerResume(); dessinerRuban(); dessinerJour(); dessinerPlacard(); dessinerCourses(); sauver(); }
 
 function dessinerResume() {
   const { menus, courses } = etat.resultat;
@@ -339,7 +355,6 @@ function dessinerResume() {
     el("strong", { texte: `${courses.length} achats à prévoir` }));
   $("n-placard").textContent = etat.articles.filter((a) => a.ingredient).length;
   $("n-courses").textContent = courses.length;
-  $("note").textContent = etat.exemple ? "Exemple FICTIF : scannez votre ticket pour le remplacer." : "";
 }
 function dessinerRuban() {
   const ruban = $("ruban"); ruban.replaceChildren();
@@ -505,8 +520,15 @@ $("copier").addEventListener("click", async () => {
 
 // ---- Démarrage
 const EXEMPLE = "SUPERMARCHE FICTIF\n12 RUE DE L'EXEMPLE 75000 PARIS\nTEL 01 00 00 00 00\n02/11/2026 18:42 CAISSE 3\nBLC POULET X2 400G      5,49 A\nPATES SPAGHETTI 500G    0,89 A\nLARDONS FUMES 2X100G    2,15 A\nOEUFS PLEIN AIR X12     3,20 A\n2 X 1,05\nYAOURT NATURE X4        2,10 A\nCOURGETTES\n0,856 KG X 2,49 €/KG    2,13 A\nTOMATES GRAPPE          2,79 A\nCHAMPIGNONS PARIS 250G  1,59 A\nSALADE BATAVIA          0,99 A\nCREME FRAICHE EPAISSE   1,45 A\nLAITUE ICEBERG          0,89 A\nPAPIER TOILETTE X6      3,49 B\nREMISE FIDELITE        -0,50\nTOTAL                  26,66\nCB                     26,66\nMERCI DE VOTRE VISITE\n";
-if (charger()) recalculer();
-else { $("texte").value = EXEMPLE; utiliserTexte(EXEMPLE, true); }
+// Premier lancement : page vierge. L'exemple ne se charge qu'à la demande.
+$("accueil-scan").addEventListener("click", (e) => ouvrir("f-scan", e.currentTarget));
+$("accueil-placard").addEventListener("click", (e) => ouvrir("f-placard", e.currentTarget));
+$("accueil-exemple").addEventListener("click", () => { $("texte").value = EXEMPLE; utiliserTexte(EXEMPLE, true); });
+$("effacer-exemple").addEventListener("click", () => {
+  etat.articles = []; etat.exclues = []; etat.coches = []; etat.exemple = false; $("texte").value = ""; $("bilan").textContent = ""; recalculer();
+});
+charger();
+recalculer();
 </script>
 </body>
 </html>
