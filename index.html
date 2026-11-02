@@ -63,7 +63,21 @@
     outline: 3px solid var(--basilic); outline-offset: 2px; }
 
   /* En-tête */
-  .tete { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .tete { display: flex; align-items: center; gap: 8px; }
+  .outils { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .profil-puce { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--trait); background: var(--surface);
+    border-radius: 999px; padding: 4px 12px 4px 4px; font-weight: 700; font-size: .95rem; max-width: 45%; min-width: 0; }
+  .profil-puce span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .initiale { flex: 0 0 auto; width: 30px; height: 30px; border-radius: 50%; display: inline-grid; place-items: center;
+    background: var(--teinte, var(--basilic)); color: #fff; font: 800 .95rem/1 var(--titre); }
+  .profils { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+  .profils button.choisir { width: 100%; display: flex; align-items: center; gap: 12px; text-align: left; border: 1px solid var(--trait);
+    background: var(--surface); border-radius: 14px; padding: 10px 12px; font-weight: 700; }
+  .profils button.choisir[aria-current="true"] { border-color: var(--basilic); box-shadow: inset 0 0 0 1px var(--basilic); }
+  .profils .actuel { margin-left: auto; font-size: .8rem; font-weight: 400; color: var(--doux); }
+  .champ { display: flex; gap: 8px; flex-wrap: wrap; }
+  .champ input { flex: 1 1 10em; min-width: 0; padding: 10px 12px; }
+  .danger { color: var(--acheter-texte); }
   .tete h1 { font: 800 1.45rem/1.1 var(--titre); margin: 0; flex: 1 1 auto; letter-spacing: -.01em; text-wrap: balance; }
   .outil { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--trait); background: var(--surface);
     border-radius: 999px; padding: 7px 14px; font-weight: 700; font-size: .95rem; }
@@ -160,6 +174,11 @@
 <div class="page">
   <div class="tete">
     <h1>Semaine en cuisine</h1>
+    <button class="profil-puce" id="ouvrir-profils" aria-haspopup="dialog" aria-label="Changer de profil">
+      <span class="initiale" id="profil-initiale" aria-hidden="true">?</span><span id="profil-nom">Profil</span>
+    </button>
+  </div>
+  <div class="outils">
     <button class="outil" id="ouvrir-placard" aria-haspopup="dialog">Placard <span class="compte" id="n-placard">0</span></button>
     <button class="outil" id="ouvrir-courses" aria-haspopup="dialog">Courses <span class="compte" id="n-courses">0</span></button>
   </div>
@@ -265,6 +284,48 @@
   </div>
 </div>
 
+<!-- Feuille : qui cuisine ? (premier lancement) -->
+<div class="voile" id="f-qui" hidden>
+  <div class="feuille pleine" role="dialog" aria-modal="true" aria-labelledby="t-qui">
+    <div class="contenu" style="align-content:center; min-height:100%">
+      <div class="bloc">
+        <h2 id="t-qui" style="font:800 1.6rem/1.15 var(--titre); margin:0">Qui cuisine&nbsp;?</h2>
+        <p class="petit" style="margin:0">Chaque personne a son profil : son placard, ses menus et sa liste de courses.</p>
+        <form class="champ" id="form-premier">
+          <input id="premier-nom" autocomplete="given-name" maxlength="24" placeholder="Votre prénom" aria-label="Votre prénom" required>
+          <button class="principal" type="submit">Commencer</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Feuille : profils -->
+<div class="voile" id="f-profils" hidden>
+  <div class="feuille" role="dialog" aria-modal="true" aria-labelledby="t-profils">
+    <header><h2 id="t-profils">Profils</h2><button class="fermer" data-fermer>Fermer</button></header>
+    <div class="contenu">
+      <ul class="profils" id="liste-profils"></ul>
+      <div class="bloc">
+        <h3>Ajouter un profil</h3>
+        <form class="champ" id="form-ajout-profil">
+          <input id="nouveau-nom" maxlength="24" placeholder="Prénom" aria-label="Prénom du nouveau profil" required>
+          <button class="principal" type="submit">Ajouter</button>
+        </form>
+      </div>
+      <div class="bloc">
+        <h3>Profil actuel</h3>
+        <form class="champ" id="form-renommer">
+          <input id="renommer-nom" maxlength="24" aria-label="Nouveau prénom" required>
+          <button class="secondaire" type="submit">Renommer</button>
+        </form>
+        <button class="secondaire danger" id="supprimer-profil">Supprimer ce profil</button>
+      </div>
+      <p class="petit">Les profils restent sur cet appareil. Sur un autre téléphone, chacun a déjà son propre espace.</p>
+    </div>
+  </div>
+</div>
+
 <!-- Feuille : courses -->
 <div class="voile" id="f-courses" hidden>
   <div class="feuille" role="dialog" aria-modal="true" aria-labelledby="t-courses">
@@ -285,7 +346,17 @@
 "use strict";
 const C = window.Courses;
 const $ = (id) => document.getElementById(id);
-const CLE = "semaine-en-cuisine-v1";
+const CLE = "semaine-en-cuisine-v1";            // ancien stockage (avant les profils), repris dans le premier profil
+const CLE_PROFILS = "semaine-en-cuisine-profils";
+const TEINTES = ["#2c6a45", "#b3541e", "#3b5bab", "#8c3d8c", "#a07a12", "#2f7f86", "#b23a52"];
+const profils = { liste: [], actif: null };
+const cleDonnees = () => CLE + ":" + profils.actif;
+function sauverProfils() { try { localStorage.setItem(CLE_PROFILS, JSON.stringify(profils)); } catch (e) { /* stockage indisponible */ } }
+function chargerProfils() {
+  try { Object.assign(profils, JSON.parse(localStorage.getItem(CLE_PROFILS) || "null") || {}); } catch (e) { /* rien */ }
+  if (!profils.liste.some((p) => p.id === profils.actif)) profils.actif = profils.liste[0]?.id ?? null;
+}
+const profilActif = () => profils.liste.find((p) => p.id === profils.actif);
 const PAR_ID = Object.fromEntries(C.INGREDIENTS.map((i) => [i.id, i]));
 const TRIES = C.INGREDIENTS.slice().sort((a, b) => a.nom.localeCompare(b.nom, "fr"));
 const RAYONS = [
@@ -308,7 +379,8 @@ function el(balise, attributs = {}, ...enfants) {
 }
 function sauver() {
   try {
-    localStorage.setItem(CLE, JSON.stringify({
+    if (!profils.actif) return;
+    localStorage.setItem(cleDonnees(), JSON.stringify({
       articles: etat.articles, exclues: etat.exclues, coches: etat.coches, exemple: etat.exemple, texte: $("texte").value,
       reglages: { jours: $("nb-jours").value, midi: $("midi").checked, soir: $("soir").checked, vegetarien: $("vegetarien").checked },
     }));
@@ -316,7 +388,7 @@ function sauver() {
 }
 function charger() {
   try {
-    const d = JSON.parse(localStorage.getItem(CLE) || "null");
+    const d = JSON.parse(localStorage.getItem(cleDonnees()) || "null");
     if (!d) return false;
     Object.assign(etat, { articles: d.articles || [], exclues: d.exclues || [], coches: d.coches || [], exemple: Boolean(d.exemple) });
     $("texte").value = d.texte || "";
@@ -439,7 +511,7 @@ function fermer(voile) { voile.hidden = true; document.body.style.overflow = "";
 for (const v of document.querySelectorAll(".voile")) {
   v.addEventListener("click", (e) => { if (e.target === v || e.target.hasAttribute("data-fermer")) fermer(v); });
 }
-document.addEventListener("keydown", (e) => { if (e.key === "Escape") { const v = document.querySelector(".voile:not([hidden])"); if (v) fermer(v); } });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") { const v = document.querySelector(".voile:not([hidden]):not(#f-qui)"); if (v) fermer(v); } });
 $("ouvrir-scan").addEventListener("click", (e) => ouvrir("f-scan", e.currentTarget));
 $("ouvrir-placard").addEventListener("click", (e) => ouvrir("f-placard", e.currentTarget));
 $("ouvrir-courses").addEventListener("click", (e) => ouvrir("f-courses", e.currentTarget));
@@ -527,8 +599,78 @@ $("accueil-exemple").addEventListener("click", () => { $("texte").value = EXEMPL
 $("effacer-exemple").addEventListener("click", () => {
   etat.articles = []; etat.exclues = []; etat.coches = []; etat.exemple = false; $("texte").value = ""; $("bilan").textContent = ""; recalculer();
 });
-charger();
+function viderEcran() {
+  Object.assign(etat, { articles: [], exclues: [], jour: 0, coches: [], exemple: false });
+  $("texte").value = ""; $("bilan").textContent = ""; $("nb-jours").value = 7;
+  $("midi").checked = true; $("soir").checked = true; $("vegetarien").checked = false;
+  image = null; $("apercu").hidden = true; $("lire").disabled = true;
+}
+function afficherProfil() {
+  const p = profilActif();
+  $("profil-nom").textContent = p ? p.nom : "Profil";
+  $("profil-initiale").textContent = p ? p.nom.trim().charAt(0).toUpperCase() : "?";
+  document.documentElement.style.setProperty("--teinte", p ? p.teinte : "");
+}
+function activerProfil(id) {
+  profils.actif = id; sauverProfils();
+  viderEcran(); charger(); afficherProfil(); recalculer();
+}
+function creerProfil(nom) {
+  const id = "p" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  const teinte = TEINTES[profils.liste.length % TEINTES.length];
+  profils.liste.push({ id, nom: nom.trim().slice(0, 24), teinte });
+  return id;
+}
+function dessinerProfils() {
+  const ul = $("liste-profils"); ul.replaceChildren();
+  for (const p of profils.liste) {
+    const actuel = p.id === profils.actif;
+    ul.append(el("li", {}, el("button", { class: "choisir", "aria-current": String(actuel),
+      onclick: () => { if (!actuel) activerProfil(p.id); fermer($("f-profils")); } },
+      el("span", { class: "initiale", style: "background:" + p.teinte, "aria-hidden": "true", texte: p.nom.charAt(0).toUpperCase() }),
+      el("span", { texte: p.nom }), actuel ? el("span", { class: "actuel", texte: "profil actuel" }) : "")));
+  }
+  $("renommer-nom").value = profilActif()?.nom || "";
+  $("supprimer-profil").textContent = "Supprimer ce profil"; attenteSuppr = null;
+}
+$("ouvrir-profils").addEventListener("click", (e) => { dessinerProfils(); ouvrir("f-profils", e.currentTarget); });
+$("form-premier").addEventListener("submit", (e) => {
+  e.preventDefault(); const nom = $("premier-nom").value.trim(); if (!nom) return;
+  const id = creerProfil(nom);
+  // Données d'avant les profils : elles reviennent au premier profil.
+  try { const ancien = localStorage.getItem(CLE); if (ancien) { localStorage.setItem(CLE + ":" + id, ancien); localStorage.removeItem(CLE); } } catch (err) { /* rien */ }
+  $("f-qui").hidden = true; document.body.style.overflow = "";
+  activerProfil(id);
+});
+$("form-ajout-profil").addEventListener("submit", (e) => {
+  e.preventDefault(); const nom = $("nouveau-nom").value.trim(); if (!nom) return;
+  $("nouveau-nom").value = ""; activerProfil(creerProfil(nom)); fermer($("f-profils"));
+});
+$("form-renommer").addEventListener("submit", (e) => {
+  e.preventDefault(); const nom = $("renommer-nom").value.trim(); const p = profilActif(); if (!nom || !p) return;
+  p.nom = nom.slice(0, 24); sauverProfils(); afficherProfil(); dessinerProfils();
+});
+let attenteSuppr = null;
+$("supprimer-profil").addEventListener("click", () => {
+  const p = profilActif(); if (!p) return;
+  if (!attenteSuppr) {
+    $("supprimer-profil").textContent = `Toucher encore : tout ce qui est à ${p.nom} sera effacé`;
+    attenteSuppr = setTimeout(() => { $("supprimer-profil").textContent = "Supprimer ce profil"; attenteSuppr = null; }, 5000); return;
+  }
+  clearTimeout(attenteSuppr); attenteSuppr = null;
+  try { localStorage.removeItem(cleDonnees()); } catch (e) { /* rien */ }
+  profils.liste = profils.liste.filter((x) => x.id !== p.id);
+  fermer($("f-profils"));
+  if (profils.liste.length) activerProfil(profils.liste[0].id);
+  else { profils.actif = null; sauverProfils(); viderEcran(); afficherProfil(); recalculer(); demanderPremierProfil(); }
+});
+function demanderPremierProfil() { $("f-qui").hidden = false; document.body.style.overflow = "hidden"; $("premier-nom").focus(); }
+
+chargerProfils();
+afficherProfil();
+if (profils.actif) charger();
 recalculer();
+if (!profils.actif) demanderPremierProfil();
 </script>
 </body>
 </html>

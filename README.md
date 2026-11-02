@@ -18,7 +18,9 @@ Après la première ouverture, l'app marche sans réseau.
 
 ## Comment s'en servir
 
-Au premier lancement, la page est vierge : chacun remplit son propre profil, qui reste sur son téléphone.
+Au premier lancement, l'app demande **Qui cuisine ?** : chaque personne a son profil, avec son placard,
+ses menus, sa liste de courses et ses réglages. Le bouton avec le prénom, en haut, permet de changer de profil,
+d'en ajouter, de renommer ou de supprimer. Les profils restent sur l'appareil : rien n'est envoyé ailleurs.
 **Voir un exemple** montre une semaine FICTIVE ; **Repartir de zéro** l'efface.
 
 1. **Scanner un ticket** (bouton en bas à droite) : photo du ticket à plat et bien éclairé, puis **Lire le ticket**.
