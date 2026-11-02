@@ -274,10 +274,12 @@
         <button data-filtre="possible" aria-pressed="false">Possible maintenant</button>
         <button data-filtre="rapide" aria-pressed="false">Rapide (≤ 30 min)</button>
         <button data-filtre="vegetarien" aria-pressed="false">Végétarien</button>
+        <button data-filtre="monde" aria-pressed="false">Cuisine du monde</button>
         <button data-filtre="favoris" aria-pressed="false">♥ Favoris</button>
       </div>
       <p class="petit" id="idees-compte"></p>
       <div class="idees" id="liste-idees"></div>
+      <button class="secondaire" id="idees-plus" hidden>Voir plus de recettes</button>
       <div class="bloc" id="bloc-mes-plats">
         <h3>Mes plats</h3>
         <p class="petit" id="aucun-plat">Touchez un plat de la semaine pour le mettre en ♥ favori ou ne plus le voir.</p>
@@ -651,12 +653,15 @@ window.addEventListener("hashchange", () => aller(location.hash.slice(1)));
 $("scan-ingredients").addEventListener("click", (e) => ouvrirScan(e.currentTarget));
 
 // ---- Idées de recettes
-const filtres = { possible: false, rapide: false, vegetarien: false, favoris: false };
+const filtres = { possible: false, rapide: false, vegetarien: false, monde: false, favoris: false };
+const PAR_PAGE = 40;
+let ideesMax = PAR_PAGE;
 for (const b of document.querySelectorAll(".filtres button")) b.addEventListener("click", () => {
   filtres[b.dataset.filtre] = !filtres[b.dataset.filtre];
-  b.setAttribute("aria-pressed", String(filtres[b.dataset.filtre])); dessinerIdees();
+  b.setAttribute("aria-pressed", String(filtres[b.dataset.filtre])); ideesMax = PAR_PAGE; dessinerIdees();
 });
-$("cherche-recette").addEventListener("input", () => dessinerIdees());
+$("cherche-recette").addEventListener("input", () => { ideesMax = PAR_PAGE; dessinerIdees(); });
+$("idees-plus").addEventListener("click", () => { ideesMax += PAR_PAGE; dessinerIdees(); });
 function dessinerIdees() {
   const dispo = new Set(etat.articles.map((a) => a.ingredient).filter(Boolean));
   const q = C.normaliser($("cherche-recette").value);
@@ -666,13 +671,17 @@ function dessinerIdees() {
   }).filter(({ rec, manque }) =>
     (!filtres.possible || !manque.length) && (!filtres.rapide || rec.temps <= 30) &&
     (!filtres.vegetarien || C.estVegetarienne(rec)) && (!filtres.favoris || etat.favoris.includes(rec.id)) &&
+    (!filtres.monde || rec.id.startsWith("mo_")) &&
     (!q || C.normaliser(rec.nom).includes(q) || rec.ingredients.concat(rec.options).some((id) => C.normaliser(PAR_ID[id].nom).includes(q))))
     .sort((a, b) => b.part - a.part || Number(etat.favoris.includes(b.rec.id)) - Number(etat.favoris.includes(a.rec.id)) || a.rec.temps - b.rec.temps || a.rec.nom.localeCompare(b.rec.nom, "fr"));
   const zone = $("liste-idees"); zone.replaceChildren();
   $("idees-compte").textContent = lignes.length
     ? `${lignes.length} recette${lignes.length > 1 ? "s" : ""}` + (dispo.size ? ", celles qui utilisent le plus votre placard d'abord." : ". Ajoutez des ingrédients pour voir ce qui est possible.")
     : "Aucune recette avec ces filtres.";
-  for (const { rec, la, manque } of lignes) {
+  const reste = lignes.length - ideesMax;
+  $("idees-plus").hidden = reste <= 0;
+  $("idees-plus").textContent = `Voir ${Math.min(PAR_PAGE, reste)} recettes de plus (${reste} restantes)`;
+  for (const { rec, la, manque } of lignes.slice(0, ideesMax)) {
     const m = { recette: rec.id, nom: rec.nom, jour: null, repas: null, utilises: rec.ingredients.concat(rec.options).filter((id) => dispo.has(id)), manquants: manque };
     const etatTexte = !manque.length ? "Tout est là" : la.length ? `${la.length}/${rec.ingredients.length} déjà là · manque ${manque.map((id) => PAR_ID[id].nom.toLowerCase()).join(", ")}` : "Manque " + manque.map((id) => PAR_ID[id].nom.toLowerCase()).join(", ");
     zone.append(el("button", { class: "idee" + (!manque.length ? " possible" : ""), onclick: (e) => ouvrirRecette(m, e.currentTarget) },
