@@ -144,7 +144,30 @@
   .liste select { max-width: 100%; min-width: 0; }
   .liste.inconnus li { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; }
   .suppr { border: 0; background: transparent; color: var(--doux); padding: 4px 8px; font-size: 1.1rem; }
-  .etapes { margin: 0; padding-left: 1.3em; display: grid; gap: 4px; }
+  .etapes { margin: 0; padding-left: 1.3em; display: grid; gap: 8px; }
+  .carte { cursor: pointer; }
+  .carte .infos { font-size: .85rem; color: var(--doux); display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .carte .coeur { color: #f08aa0; }
+  .carte .boutons { display: flex; gap: 8px; flex-wrap: wrap; }
+  .voir { background: var(--la); color: var(--la-texte); border: 0; border-radius: 10px; padding: 6px 12px; font-size: .9rem; font-weight: 700; }
+  .meta { margin: 0; color: var(--doux); display: flex; gap: 12px; flex-wrap: wrap; }
+  .ingredients { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+  .ingredients li { display: flex; justify-content: space-between; gap: 10px; align-items: center; }
+  .ingredients .etat { font-size: .8rem; border-radius: 999px; padding: 2px 10px; white-space: nowrap; }
+  .ingredients .etat.la { background: var(--la); color: var(--la-texte); }
+  .ingredients .etat.acheter { background: var(--acheter); color: var(--acheter-texte); }
+  .ingredients .etat.option { color: var(--doux); border: 1px solid var(--trait); }
+  .actions-recette, .actions-courses { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  #recette-favori[aria-pressed="true"] { border-color: #f08aa0; color: #f08aa0; }
+  .suggestions, .puces { display: flex; flex-wrap: wrap; gap: 8px; }
+  .suggestions:empty { display: none; }
+  .suggestions button, .puces button { border: 1px solid var(--trait); background: var(--fond); border-radius: 999px; padding: 6px 12px; font-size: .92rem; }
+  .suggestions button::before { content: "+ "; color: var(--basilic); font-weight: 700; }
+  .puces:empty { display: none; }
+  .puces .fav::after { content: " ×"; color: var(--doux); }
+  .puces .ban { text-decoration: line-through; color: var(--doux); }
+  .puces .ban::after { content: " ↺"; text-decoration: none; display: inline-block; margin-left: 4px; color: var(--basilic); }
+  input[type="search"] { width: 100%; padding: 10px 12px; }
   .rayon h3 { font: 600 .82rem/1.2 var(--corps); text-transform: uppercase; letter-spacing: .07em; color: var(--doux); margin: 0 0 4px; }
   .courses { list-style: none; padding: 0; margin: 0; }
   .courses label { display: flex; gap: 10px; align-items: baseline; padding: 6px 0; }
@@ -219,6 +242,20 @@
     <header><h2 id="t-placard">Placard</h2><button class="fermer" data-fermer>Fermer</button></header>
     <div class="contenu">
       <div class="bloc">
+        <h3>Ajouter un ingrédient</h3>
+        <input id="cherche-ingredient" type="search" autocomplete="off" placeholder="Tapez : poulet, riz, tomates…" aria-label="Chercher un ingrédient à ajouter">
+        <div class="suggestions" id="suggestions" aria-live="polite"></div>
+      </div>
+      <div class="bloc">
+        <h3>Dans mon placard</h3>
+        <ul class="liste" id="liste-reconnus"></ul>
+      </div>
+      <div class="bloc" id="bloc-inconnus">
+        <h3>Lignes du ticket non reconnues</h3>
+        <p class="petit">Choisissez l'ingrédient, ou laissez « ignorer ».</p>
+        <ul class="liste inconnus" id="liste-inconnus"></ul>
+      </div>
+      <div class="bloc">
         <h3>Réglages des menus</h3>
         <div class="reglages">
           <label>Jours <input type="number" id="nb-jours" min="1" max="14" value="7"></label>
@@ -226,20 +263,13 @@
           <label><input type="checkbox" id="soir" checked> Soir</label>
           <label><input type="checkbox" id="vegetarien"> Végétarien</label>
         </div>
-        <button class="secondaire" id="remettre" hidden>Remettre les plats écartés</button>
+        <button class="secondaire" id="remettre" hidden>Remettre les plats changés cette semaine</button>
       </div>
-      <div class="bloc">
-        <h3>Ingrédients achetés</h3>
-        <ul class="liste" id="liste-reconnus"></ul>
-        <div class="reglages">
-          <select id="choix-ajout" aria-label="Ingrédient à ajouter"></select>
-          <button class="secondaire" id="ajouter">Ajouter</button>
-        </div>
-      </div>
-      <div class="bloc" id="bloc-inconnus">
-        <h3>Lignes non reconnues</h3>
-        <p class="petit">Choisissez l'ingrédient, ou laissez « ignorer ».</p>
-        <ul class="liste inconnus" id="liste-inconnus"></ul>
+      <div class="bloc" id="bloc-mes-plats">
+        <h3>Mes plats</h3>
+        <p class="petit" id="aucun-plat">Touchez un plat de la semaine pour le mettre en ♥ favori ou ne plus le voir.</p>
+        <div id="liste-favoris" class="puces"></div>
+        <div id="liste-bannies" class="puces"></div>
       </div>
       <button class="secondaire" id="vider">Vider le placard</button>
     </div>
@@ -314,6 +344,29 @@
   </div>
 </div>
 
+<!-- Feuille : recette -->
+<div class="voile" id="f-recette" hidden>
+  <div class="feuille" role="dialog" aria-modal="true" aria-labelledby="t-recette">
+    <header><h2 id="t-recette">Recette</h2><button class="fermer" data-fermer>Fermer</button></header>
+    <div class="contenu">
+      <p class="meta" id="recette-meta"></p>
+      <div class="bloc">
+        <h3>Ingrédients</h3>
+        <ul class="ingredients" id="recette-ingredients"></ul>
+      </div>
+      <div class="bloc" id="bloc-etapes">
+        <h3>Préparation</h3>
+        <ol class="etapes" id="recette-etapes"></ol>
+      </div>
+      <div class="actions-recette">
+        <button class="secondaire" id="recette-favori" aria-pressed="false">♡ Favori</button>
+        <button class="secondaire" id="recette-autre">↻ Autre idée</button>
+      </div>
+      <button class="lien danger" id="recette-bannir">Ne plus me proposer ce plat</button>
+    </div>
+  </div>
+</div>
+
 <!-- Feuille : courses -->
 <div class="voile" id="f-courses" hidden>
   <div class="feuille" role="dialog" aria-modal="true" aria-labelledby="t-courses">
@@ -321,8 +374,12 @@
     <div class="contenu">
       <p class="petit">Ce qui manque pour les menus, rangé par rayon.</p>
       <div id="rayons" class="contenu" style="padding:0"></div>
-      <button class="principal" id="copier">Copier la liste</button>
-      <p class="petit" id="copie"></p>
+      <div class="actions-courses">
+        <button class="principal" id="partager">Envoyer la liste</button>
+        <button class="secondaire" id="copier">Copier</button>
+      </div>
+      <button class="secondaire" id="courses-faites" disabled>J'ai fait les courses : ranger les articles cochés</button>
+      <p class="petit" id="copie" aria-live="polite"></p>
       <textarea id="texte-courses" hidden readonly aria-label="Liste à copier"></textarea>
     </div>
   </div>
@@ -353,7 +410,8 @@ const RAYONS = [
 ];
 const NOM_RAYON = Object.fromEntries(RAYONS);
 const ORDRE_RAYONS = [...new Set(RAYONS.map((r) => r[1]))];
-const etat = { articles: [], exclues: [], jour: 0, coches: [], exemple: false, resultat: null };
+const etat = { articles: [], exclues: [], jour: 0, coches: [], exemple: false, favoris: [], bannies: [], resultat: null };
+const RECETTES = Object.fromEntries(C.RECETTES.map((x) => [x.id, x]));
 
 function el(balise, attributs = {}, ...enfants) {
   const n = document.createElement(balise);
@@ -370,6 +428,7 @@ function sauver() {
     if (!profils.actif) return;
     localStorage.setItem(cleDonnees(), JSON.stringify({
       articles: etat.articles, exclues: etat.exclues, coches: etat.coches, exemple: etat.exemple, texte: $("texte").value,
+      favoris: etat.favoris, bannies: etat.bannies,
       reglages: { jours: $("nb-jours").value, midi: $("midi").checked, soir: $("soir").checked, vegetarien: $("vegetarien").checked },
     }));
   } catch (e) { /* stockage indisponible */ }
@@ -378,7 +437,8 @@ function charger() {
   try {
     const d = JSON.parse(localStorage.getItem(cleDonnees()) || "null");
     if (!d) return false;
-    Object.assign(etat, { articles: d.articles || [], exclues: d.exclues || [], coches: d.coches || [], exemple: Boolean(d.exemple) });
+    Object.assign(etat, { articles: d.articles || [], exclues: d.exclues || [], coches: d.coches || [], exemple: Boolean(d.exemple),
+      favoris: (d.favoris || []).filter((id) => RECETTES[id]), bannies: (d.bannies || []).filter((id) => RECETTES[id]) });
     $("texte").value = d.texte || "";
     if (d.reglages) {
       $("nb-jours").value = d.reglages.jours || 7; $("midi").checked = d.reglages.midi !== false;
@@ -397,7 +457,8 @@ function recalculer() {
   const repas = [$("midi").checked && "midi", $("soir").checked && "soir"].filter(Boolean);
   const jours = Math.min(14, Math.max(1, Number($("nb-jours").value) || 7));
   etat.resultat = repas.length && etat.articles.length
-    ? C.proposerMenus(etat.articles, { jours, repas, vegetarien: $("vegetarien").checked, exclues: etat.exclues })
+    ? C.proposerMenus(etat.articles, { jours, repas, vegetarien: $("vegetarien").checked,
+        exclues: etat.exclues.concat(etat.bannies), favoris: etat.favoris })
     : { menus: [], courses: [], restes: [] };
   etat.jour = Math.min(etat.jour, jours - 1);
   toutDessiner();
@@ -439,9 +500,19 @@ function dessinerJour() {
   if (!menus.length) { liste.append(el("p", { class: "vide", texte: "Aucun repas : cochez midi ou soir dans le Placard." })); return; }
   for (const m of menus) {
     const p = el("div", { class: "pastilles" }, ...pastilles(m.utilises, "la"), ...pastilles(m.manquants, "acheter"));
-    liste.append(el("article", { class: "carte" },
-      el("div", { class: "moment", texte: m.repas }), el("h3", { class: "plat", texte: m.nom }), p,
-      el("button", { class: "autre", texte: "↻ Autre idée", onclick: () => { etat.exclues.push(m.recette); recalculer(); } })));
+    const rec = RECETTES[m.recette] || {};
+    const infos = el("div", { class: "infos" });
+    if (rec.temps) infos.append(el("span", { texte: "⏱ " + rec.temps + " min" }));
+    if (C.estVegetarienne(rec)) infos.append(el("span", { texte: "végétarien" }));
+    if (etat.favoris.includes(m.recette)) infos.append(el("span", { class: "coeur", texte: "♥ favori" }));
+    const carte = el("article", { class: "carte", tabindex: "0", "aria-label": m.nom + ", voir la recette",
+      onclick: (e) => { if (!e.target.closest("button")) ouvrirRecette(m, carte); },
+      onkeydown: (e) => { if (e.key === "Enter" && e.target === carte) ouvrirRecette(m, carte); } },
+      el("div", { class: "moment", texte: m.repas }), el("h3", { class: "plat", texte: m.nom }), infos, p,
+      el("div", { class: "boutons" },
+        el("button", { class: "voir", texte: "Voir la recette", onclick: (e) => ouvrirRecette(m, e.currentTarget) }),
+        el("button", { class: "autre", texte: "↻ Autre idée", onclick: () => { etat.exclues.push(m.recette); recalculer(); } })));
+    liste.append(carte);
   }
 }
 function selectIngredient(valeur, surChange, vide) {
@@ -469,10 +540,23 @@ function dessinerPlacard() {
   if (!reconnus.children.length) reconnus.append(el("li", { class: "vide", texte: "Rien pour l'instant. Scannez un ticket." }));
   $("bloc-inconnus").hidden = !inconnus.children.length;
   $("remettre").hidden = !etat.exclues.length;
+  const fav = $("liste-favoris"), ban = $("liste-bannies"); fav.replaceChildren(); ban.replaceChildren();
+  for (const id of etat.favoris) fav.append(el("button", { class: "fav", "aria-label": "Retirer des favoris : " + RECETTES[id].nom, texte: "♥ " + RECETTES[id].nom,
+    onclick: () => { etat.favoris = etat.favoris.filter((x) => x !== id); recalculer(); } }));
+  for (const id of etat.bannies) ban.append(el("button", { class: "ban", "aria-label": "Proposer à nouveau : " + RECETTES[id].nom, texte: RECETTES[id].nom,
+    onclick: () => { etat.bannies = etat.bannies.filter((x) => x !== id); recalculer(); } }));
+  if (etat.bannies.length) ban.prepend(el("span", { class: "petit", style: "width:100%", texte: "Plus jamais proposés (touchez pour les remettre) :" }));
+  $("aucun-plat").hidden = Boolean(etat.favoris.length || etat.bannies.length);
+}
+function majCoursesFaites() {
+  const n = etat.resultat.courses.filter((c) => etat.coches.includes(c.id)).length;
+  $("courses-faites").disabled = !n;
+  $("courses-faites").textContent = n ? `J'ai fait les courses : ranger ${n} article${n > 1 ? "s" : ""} dans le placard` : "Cochez ce que vous avez acheté pour le ranger dans le placard";
 }
 function dessinerCourses() {
   const zone = $("rayons"); zone.replaceChildren();
   const { courses } = etat.resultat;
+  majCoursesFaites();
   if (!courses.length) { zone.append(el("p", { class: "vide", texte: "Rien à acheter : tout est déjà là." })); return; }
   for (const rayon of ORDRE_RAYONS) {
     const lignes = courses.filter((c) => NOM_RAYON[PAR_ID[c.id].categorie] === rayon);
@@ -483,7 +567,7 @@ function dessinerCourses() {
       const label = el("label", { class: coche ? "coche" : "" },
         el("input", { type: "checkbox", checked: coche, onchange: (e) => {
           etat.coches = etat.coches.filter((x) => x !== c.id).concat(e.target.checked ? [c.id] : []);
-          label.className = e.target.checked ? "coche" : ""; sauver(); } }),
+          label.className = e.target.checked ? "coche" : ""; majCoursesFaites(); sauver(); } }),
         el("span", { texte: c.nom + (c.articles > 1 ? ` ×${c.articles}` : "") }),
         el("span", { class: "quand", title: c.pour.join(", "), texte: "pour " + (c.jour === 0 ? "auj." : fmt(dateDu(c.jour), { weekday: "short" })) }));
       ul.append(el("li", {}, label));
@@ -500,7 +584,11 @@ for (const v of document.querySelectorAll(".voile")) {
   v.addEventListener("click", (e) => { if (e.target === v || e.target.hasAttribute("data-fermer")) fermer(v); });
 }
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") { const v = document.querySelector(".voile:not([hidden]):not(#f-qui)"); if (v) fermer(v); } });
-$("ouvrir-scan").addEventListener("click", (e) => ouvrir("f-scan", e.currentTarget));
+function ouvrirScan(depuis) {
+  $("utiliser").textContent = etat.articles.length && !etat.exemple ? "Ajouter au placard" : "Utiliser ces ingrédients";
+  ouvrir("f-scan", depuis);
+}
+$("ouvrir-scan").addEventListener("click", (e) => ouvrirScan(e.currentTarget));
 $("ouvrir-placard").addEventListener("click", (e) => ouvrir("f-placard", e.currentTarget));
 $("ouvrir-courses").addEventListener("click", (e) => ouvrir("f-courses", e.currentTarget));
 $("ouvrir-installer").addEventListener("click", (e) => ouvrir("f-installer", e.currentTarget));
@@ -536,7 +624,7 @@ $("lire").addEventListener("click", async () => {
     });
     $("texte").value = res.data.text;
     $("details-texte").open = true;
-    $("etat-ocr").textContent = "Lu. Vérifiez le texte si besoin, puis « Utiliser ces ingrédients ».";
+    $("etat-ocr").textContent = "Lu. Vérifiez le texte si besoin, puis validez en bas.";
   } catch (e) {
     $("etat-ocr").textContent = "La lecture a échoué (" + e.message + "). Collez le texte ci-dessous.";
     $("details-texte").open = true;
@@ -544,26 +632,32 @@ $("lire").addEventListener("click", async () => {
 });
 function utiliserTexte(texte, exemple) {
   const { articles, ignorees } = C.analyserTicket(texte);
-  etat.articles = articles.map(({ libelle, quantite, ingredient, prix }) => ({ libelle, quantite, ingredient, prix }));
+  const nouveaux = articles.map(({ libelle, quantite, ingredient, prix }) => ({ libelle, quantite, ingredient, prix }));
+  // Un nouveau ticket s'ajoute au placard ; il ne remplace que l'exemple.
+  const ajout = !exemple && !etat.exemple && etat.articles.length > 0;
+  if (ajout) {
+    for (const n of nouveaux) {
+      const existant = n.ingredient && etat.articles.find((a) => a.ingredient === n.ingredient);
+      if (existant) existant.quantite = (Number(existant.quantite) || 1) + (Number(n.quantite) || 1);
+      else etat.articles.push(n);
+    }
+  } else etat.articles = nouveaux;
   etat.exclues = []; etat.coches = []; etat.jour = 0; etat.exemple = exemple;
   const reconnus = articles.filter((a) => a.ingredient).length;
-  $("bilan").textContent = `${reconnus} ingrédients reconnus, ${articles.length - reconnus} à vérifier, ${ignorees.length} lignes ignorées.`;
+  $("bilan").textContent = `${reconnus} ingrédients reconnus${ajout ? " et ajoutés au placard" : ""}, ${articles.length - reconnus} à vérifier, ${ignorees.length} lignes ignorées.`;
   recalculer();
 }
 $("utiliser").addEventListener("click", () => {
   if (!$("texte").value.trim()) { $("bilan").textContent = "Aucun texte : prenez une photo ou collez le ticket."; $("details-texte").open = true; return; }
   utiliserTexte($("texte").value, false);
+  $("texte").value = ""; image = null; $("photo").value = ""; $("apercu").hidden = true; $("lire").disabled = true;
+  $("etat-ocr").textContent = "Ticket à plat, bien éclairé. La photo reste sur votre appareil.";
   fermer($("f-scan"));
 });
 
 // ---- Placard et réglages
 for (const id of ["nb-jours", "midi", "soir", "vegetarien"]) $(id).addEventListener("change", recalculer);
 $("remettre").addEventListener("click", () => { etat.exclues = []; recalculer(); });
-const choixAjout = $("choix-ajout");
-for (const i of TRIES) choixAjout.append(el("option", { value: i.id, texte: i.nom }));
-$("ajouter").addEventListener("click", () => {
-  etat.articles.push({ libelle: "", quantite: 1, ingredient: choixAjout.value, prix: null }); etat.exemple = false; recalculer();
-});
 let attente = null;
 $("vider").addEventListener("click", () => {
   if (!attente) { $("vider").textContent = "Touchez encore pour confirmer"; attente = setTimeout(() => { $("vider").textContent = "Vider le placard"; attente = null; }, 4000); return; }
@@ -571,9 +665,88 @@ $("vider").addEventListener("click", () => {
   etat.articles = []; etat.exemple = false; recalculer();
 });
 
+// ---- Fiche recette
+let repasOuvert = null;
+function ouvrirRecette(m, depuis) {
+  repasOuvert = m;
+  const rec = RECETTES[m.recette] || { ingredients: [], options: [] };
+  $("t-recette").textContent = m.nom;
+  const meta = $("recette-meta"); meta.replaceChildren();
+  meta.append(el("span", { texte: fmt(dateDu(m.jour), { weekday: "long" }) + " " + m.repas }));
+  if (rec.temps) meta.append(el("span", { texte: "⏱ " + rec.temps + " min" }));
+  if (C.estVegetarienne(rec)) meta.append(el("span", { texte: "végétarien" }));
+  const ul = $("recette-ingredients"); ul.replaceChildren();
+  const ligne = (id, classe, texte) => ul.append(el("li", {}, el("span", { texte: PAR_ID[id].nom }), el("span", { class: "etat " + classe, texte })));
+  for (const id of rec.ingredients) ligne(id, m.utilises.includes(id) ? "la" : "acheter", m.utilises.includes(id) ? "déjà là" : "à acheter");
+  for (const id of rec.options) ligne(id, m.utilises.includes(id) ? "la" : "option", m.utilises.includes(id) ? "déjà là" : "si vous en avez");
+  const ol = $("recette-etapes"); ol.replaceChildren();
+  for (const e of rec.etapes || []) ol.append(el("li", { texte: e }));
+  $("bloc-etapes").hidden = !(rec.etapes || []).length;
+  majFavori();
+  $("recette-bannir").textContent = "Ne plus me proposer ce plat"; attenteBannir = null;
+  ouvrir("f-recette", depuis);
+}
+function majFavori() {
+  const fav = etat.favoris.includes(repasOuvert.recette);
+  $("recette-favori").setAttribute("aria-pressed", String(fav));
+  $("recette-favori").textContent = fav ? "♥ Favori" : "♡ Mettre en favori";
+}
+$("recette-favori").addEventListener("click", () => {
+  const id = repasOuvert.recette;
+  etat.favoris = etat.favoris.includes(id) ? etat.favoris.filter((x) => x !== id) : etat.favoris.concat(id);
+  majFavori(); toutDessiner();
+});
+$("recette-autre").addEventListener("click", () => { etat.exclues.push(repasOuvert.recette); fermer($("f-recette")); recalculer(); });
+let attenteBannir = null;
+$("recette-bannir").addEventListener("click", () => {
+  if (!attenteBannir) {
+    $("recette-bannir").textContent = "Toucher encore pour confirmer (réversible dans le Placard)";
+    attenteBannir = setTimeout(() => { $("recette-bannir").textContent = "Ne plus me proposer ce plat"; attenteBannir = null; }, 4000); return;
+  }
+  clearTimeout(attenteBannir); attenteBannir = null;
+  const id = repasOuvert.recette;
+  etat.bannies = etat.bannies.concat(id); etat.favoris = etat.favoris.filter((x) => x !== id);
+  fermer($("f-recette")); recalculer();
+});
+
+// ---- Ajout d'ingrédient par recherche
+function suggerer() {
+  const q = C.normaliser($("cherche-ingredient").value);
+  const zone = $("suggestions"); zone.replaceChildren();
+  if (!q) return;
+  const trouves = TRIES.filter((i) => C.normaliser(i.nom).includes(q) || i.mots.some((m) => m.startsWith(q))).slice(0, 10);
+  if (!trouves.length) { zone.append(el("span", { class: "petit", texte: "Aucun ingrédient de ce nom." })); return; }
+  for (const i of trouves) zone.append(el("button", { texte: i.nom, onclick: () => ajouterIngredient(i.id, 1, "") }));
+}
+function ajouterIngredient(id, quantite, libelle) {
+  const existant = etat.articles.find((a) => a.ingredient === id);
+  if (existant) existant.quantite = (Number(existant.quantite) || 1) + quantite;
+  else etat.articles.push({ libelle, quantite, ingredient: id, prix: null });
+  etat.exemple = false; $("cherche-ingredient").value = ""; suggerer(); recalculer();
+  $("copie").textContent = "";
+}
+$("cherche-ingredient").addEventListener("input", suggerer);
+
 // ---- Courses
+function texteCourses() {
+  return etat.resultat.courses.map((c) => "- " + c.nom + (c.articles > 1 ? ` ×${c.articles}` : "")).join("\n");
+}
+$("partager").addEventListener("click", async () => {
+  const texte = "Liste de courses\n" + texteCourses();
+  if (navigator.share) {
+    try { await navigator.share({ title: "Liste de courses", text: texte }); return; } catch (e) { if (e.name === "AbortError") return; }
+  }
+  $("copier").click();
+});
+$("courses-faites").addEventListener("click", () => {
+  const achetes = etat.resultat.courses.filter((c) => etat.coches.includes(c.id));
+  for (const c of achetes) ajouterIngredient(c.id, c.articles, "Acheté");
+  etat.coches = [];
+  recalculer();
+  $("copie").textContent = `${achetes.length} article${achetes.length > 1 ? "s" : ""} rangé${achetes.length > 1 ? "s" : ""} dans le placard. Les menus sont à jour.`;
+});
 $("copier").addEventListener("click", async () => {
-  const texte = etat.resultat.courses.map((c) => "- " + c.nom + (c.articles > 1 ? ` ×${c.articles}` : "")).join("\n");
+  const texte = texteCourses();
   try { await navigator.clipboard.writeText(texte); $("copie").textContent = "Liste copiée."; }
   catch (e) { $("texte-courses").value = texte; $("texte-courses").hidden = false; $("texte-courses").select(); $("copie").textContent = "Copie bloquée ici : le texte est sélectionné, copiez-le à la main."; }
 });
@@ -581,14 +754,14 @@ $("copier").addEventListener("click", async () => {
 // ---- Démarrage
 const EXEMPLE = "SUPERMARCHE FICTIF\n12 RUE DE L'EXEMPLE 75000 PARIS\nTEL 01 00 00 00 00\n02/11/2026 18:42 CAISSE 3\nBLC POULET X2 400G      5,49 A\nPATES SPAGHETTI 500G    0,89 A\nLARDONS FUMES 2X100G    2,15 A\nOEUFS PLEIN AIR X12     3,20 A\n2 X 1,05\nYAOURT NATURE X4        2,10 A\nCOURGETTES\n0,856 KG X 2,49 €/KG    2,13 A\nTOMATES GRAPPE          2,79 A\nCHAMPIGNONS PARIS 250G  1,59 A\nSALADE BATAVIA          0,99 A\nCREME FRAICHE EPAISSE   1,45 A\nLAITUE ICEBERG          0,89 A\nPAPIER TOILETTE X6      3,49 B\nREMISE FIDELITE        -0,50\nTOTAL                  26,66\nCB                     26,66\nMERCI DE VOTRE VISITE\n";
 // Premier lancement : page vierge. L'exemple ne se charge qu'à la demande.
-$("accueil-scan").addEventListener("click", (e) => ouvrir("f-scan", e.currentTarget));
+$("accueil-scan").addEventListener("click", (e) => ouvrirScan(e.currentTarget));
 $("accueil-placard").addEventListener("click", (e) => ouvrir("f-placard", e.currentTarget));
 $("accueil-exemple").addEventListener("click", () => { $("texte").value = EXEMPLE; utiliserTexte(EXEMPLE, true); });
 $("effacer-exemple").addEventListener("click", () => {
   etat.articles = []; etat.exclues = []; etat.coches = []; etat.exemple = false; $("texte").value = ""; $("bilan").textContent = ""; recalculer();
 });
 function viderEcran() {
-  Object.assign(etat, { articles: [], exclues: [], jour: 0, coches: [], exemple: false });
+  Object.assign(etat, { articles: [], exclues: [], jour: 0, coches: [], exemple: false, favoris: [], bannies: [] });
   $("texte").value = ""; $("bilan").textContent = ""; $("nb-jours").value = 7;
   $("midi").checked = true; $("soir").checked = true; $("vegetarien").checked = false;
   image = null; $("apercu").hidden = true; $("lire").disabled = true;
