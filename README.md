@@ -19,19 +19,22 @@ Après la première ouverture, l'app marche sans réseau.
 ## Comment s'en servir
 
 Au premier lancement, l'app demande **Qui cuisine ?** : chaque personne a son profil, avec son placard,
-ses menus, sa liste de courses et ses réglages. Le bouton avec le prénom, en haut, permet de changer de profil,
-d'en ajouter, de renommer ou de supprimer. Les profils restent sur l'appareil : rien n'est envoyé ailleurs.
-**Voir un exemple** montre une semaine FICTIVE ; **Repartir de zéro** l'efface.
+ses menus, sa liste de courses, ses favoris et ses réglages. Le bouton avec le prénom, en haut, permet de changer
+de profil, d'en ajouter, de renommer ou de supprimer. Les profils restent sur l'appareil : rien n'est envoyé ailleurs.
 
-1. **Scanner un ticket** (bouton en bas à droite) : photo du ticket à plat et bien éclairé, puis **Lire le ticket**.
-   Le texte lu peut être corrigé ; on peut aussi le coller à la main.
-2. **Utiliser ces ingrédients** : la semaine se remplit. Touchez un jour pour voir ses repas.
-   Pastille verte : déjà acheté. Pastille safran : à acheter. **Autre idée** change un plat.
-3. **Placard** : corriger les ingrédients, les quantités, régler le nombre de jours, midi/soir, végétarien.
-4. **Courses** : ce qui manque, rangé par rayon, à cocher ou à copier.
+Quatre onglets en bas :
+
+- **Semaine** : les repas jour par jour. Toucher un plat ouvre sa recette (temps, ingrédients déjà là / à acheter,
+  étapes). **Autre idée** change le plat ; **♥** le met en favori (il revient plus souvent). Réglages : nombre de jours,
+  midi/soir, végétarien.
+- **Ingrédients** : le placard. **Scanner un ticket** ajoute ses articles ; on peut aussi taper un ingrédient.
+- **Idées** : les 90 recettes, celles qu'on peut faire avec son placard d'abord. Filtres : possible maintenant,
+  rapide, végétarien, favoris. Un plat peut être écarté pour toujours, et remis plus tard.
+- **Courses** : ce qui manque, rangé par rayon. **Envoyer la liste** (WhatsApp, SMS…). Cocher en magasin, puis
+  **J'ai fait les courses** range les articles dans le placard et met les menus à jour.
 
 Les menus utilisent d'abord ce qui se garde le moins (viande, poisson, salade…). Sel, poivre, huile et épices
-courantes sont supposés au placard.
+courantes sont supposés au placard. **Voir un exemple** montre une semaine FICTIVE ; **Repartir de zéro** l'efface.
 
 ## Mettre en ligne (GitHub Pages)
 

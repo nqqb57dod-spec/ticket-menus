@@ -44,7 +44,7 @@
   img { max-width: 100%; }
   [hidden] { display: none !important; }
   body { background: var(--fond); color: var(--encre); font: 17px/1.45 var(--corps); }
-  .page { max-width: 720px; margin: 0 auto; padding-block: 12px 120px;
+  .page { max-width: 720px; margin: 0 auto; padding-block: 12px 170px;
     padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
   button { font: inherit; color: inherit; cursor: pointer; }
   button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, summary:focus-visible, label.bouton:focus-within {
@@ -104,7 +104,7 @@
   .lien { background: none; border: 0; padding: 4px 0; color: var(--basilic); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; justify-self: start; }
 
   /* Bouton flottant */
-  .fab { position: fixed; right: calc(16px + env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  .fab { position: fixed; right: calc(16px + env(safe-area-inset-right, 0px)); bottom: calc(84px + env(safe-area-inset-bottom, 0px));
     background: var(--basilic); color: var(--sur-basilic); border: 0; border-radius: 999px; padding: 14px 20px; font-weight: 700;
     box-shadow: var(--ombre); display: inline-flex; gap: 8px; align-items: center; z-index: 5; }
 
@@ -145,6 +145,32 @@
   .liste.inconnus li { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; }
   .suppr { border: 0; background: transparent; color: var(--doux); padding: 4px 8px; font-size: 1.1rem; }
   .etapes { margin: 0; padding-left: 1.3em; display: grid; gap: 8px; }
+  .titre-vue { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 16px 0 12px; flex-wrap: wrap; }
+  .titre-vue h2 { font: 800 1.35rem/1.15 var(--titre); margin: 0; }
+  .petit-bouton { padding: 8px 14px; font-size: .92rem; }
+  .pile { display: grid; gap: 14px; }
+  .reglages-menus { margin-top: 16px; }
+  .reglages-menus summary { font-weight: 700; }
+  .reglages-menus[open] summary { margin-bottom: 4px; }
+  .onglets { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; display: grid; grid-template-columns: repeat(4, 1fr);
+    background: var(--surface); border-top: 1px solid var(--trait);
+    padding: 6px max(8px, env(safe-area-inset-right, 0px)) calc(6px + env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-left, 0px)); }
+  .onglets button { position: relative; border: 0; background: none; color: var(--doux); display: grid; justify-items: center; gap: 2px;
+    padding: 6px 2px; font-size: .74rem; font-weight: 700; border-radius: 12px; }
+  .onglets svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .onglets button[aria-current] { color: var(--basilic); background: var(--la); }
+  .onglets .compte { position: absolute; top: 2px; left: calc(50% + 6px); background: var(--basilic); color: var(--sur-basilic);
+    border-radius: 999px; padding: 0 6px; font-size: .7rem; line-height: 1.5; font-variant-numeric: tabular-nums; }
+  .filtres { display: flex; flex-wrap: wrap; gap: 8px; }
+  .filtres button { border: 1px solid var(--trait); background: var(--surface); border-radius: 999px; padding: 6px 12px; font-size: .9rem; }
+  .filtres button[aria-pressed="true"] { background: var(--basilic); border-color: var(--basilic); color: var(--sur-basilic); font-weight: 700; }
+  .idees { display: grid; gap: 10px; }
+  .idee { display: grid; gap: 4px; text-align: left; background: var(--surface); border: 1px solid var(--trait); border-radius: 14px; padding: 12px 14px; }
+  .idee.possible { border-color: var(--basilic); }
+  .idee-nom { font: 700 1.05rem/1.25 var(--titre); }
+  .idee-infos { font-size: .82rem; color: var(--doux); }
+  .idee-etat { font-size: .85rem; color: var(--acheter-texte); }
+  .idee.possible .idee-etat { color: var(--la-texte); font-weight: 700; }
   .carte { cursor: pointer; }
   .carte .infos { font-size: .85rem; color: var(--doux); display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
   .carte .coeur { color: #f08aa0; }
@@ -189,10 +215,7 @@
       <span class="initiale" id="profil-initiale" aria-hidden="true">?</span><span id="profil-nom">Profil</span>
     </button>
   </div>
-  <div class="outils">
-    <button class="outil" id="ouvrir-placard" aria-haspopup="dialog">Placard <span class="compte" id="n-placard">0</span></button>
-    <button class="outil" id="ouvrir-courses" aria-haspopup="dialog">Courses <span class="compte" id="n-courses">0</span></button>
-  </div>
+  <section class="vue" id="vue-semaine" aria-label="Semaine">
   <section class="accueil" id="accueil" hidden aria-labelledby="t-accueil">
     <h2 id="t-accueil">Votre semaine est vide</h2>
     <p>Prenez en photo votre dernier ticket de caisse. L'app propose les repas avec ce que vous avez acheté, et la liste de ce qui manque.</p>
@@ -208,8 +231,84 @@
     <p class="legende"><span class="pastille la">vert</span> déjà acheté · <span class="pastille acheter">safran</span> à acheter</p>
   </div>
   <p class="note" id="bandeau-exemple" hidden>Exemple FICTIF. <button class="lien" id="effacer-exemple">Repartir de zéro</button></p>
+      <details class="bloc reglages-menus">
+        <summary>Réglages des menus</summary>
+        <div class="reglages">
+          <label>Jours <input type="number" id="nb-jours" min="1" max="14" value="7"></label>
+          <label><input type="checkbox" id="midi" checked> Midi</label>
+          <label><input type="checkbox" id="soir" checked> Soir</label>
+          <label><input type="checkbox" id="vegetarien"> Végétarien</label>
+        </div>
+        <button class="secondaire" id="remettre" hidden>Remettre les plats changés cette semaine</button>
+      </details>
   <p class="note"><button class="autre" id="ouvrir-installer" aria-haspopup="dialog">Installer sur mon téléphone</button></p>
+  </section>
+
+  <section class="vue" id="vue-ingredients" aria-labelledby="t-ingredients" hidden>
+    <div class="titre-vue"><h2 id="t-ingredients">Mes ingrédients</h2>
+      <button class="principal petit-bouton" id="scan-ingredients">Scanner un ticket</button></div>
+    <div class="pile">
+      <div class="bloc">
+        <h3>Ajouter un ingrédient</h3>
+        <input id="cherche-ingredient" type="search" autocomplete="off" placeholder="Tapez : poulet, riz, tomates…" aria-label="Chercher un ingrédient à ajouter">
+        <div class="suggestions" id="suggestions" aria-live="polite"></div>
+      </div>
+      <div class="bloc">
+        <h3>Dans mon placard</h3>
+        <ul class="liste" id="liste-reconnus"></ul>
+      </div>
+      <div class="bloc" id="bloc-inconnus">
+        <h3>Lignes du ticket non reconnues</h3>
+        <p class="petit">Choisissez l'ingrédient, ou laissez « ignorer ».</p>
+        <ul class="liste inconnus" id="liste-inconnus"></ul>
+      </div>
+      <button class="secondaire" id="vider">Vider le placard</button>
+    </div>
+  </section>
+
+  <section class="vue" id="vue-idees" aria-labelledby="t-idees" hidden>
+    <div class="titre-vue"><h2 id="t-idees">Idées de recettes</h2></div>
+    <div class="pile">
+      <input id="cherche-recette" type="search" autocomplete="off" placeholder="Chercher un plat ou un ingrédient" aria-label="Chercher une recette">
+      <div class="filtres" role="group" aria-label="Filtres">
+        <button data-filtre="possible" aria-pressed="false">Possible maintenant</button>
+        <button data-filtre="rapide" aria-pressed="false">Rapide (≤ 30 min)</button>
+        <button data-filtre="vegetarien" aria-pressed="false">Végétarien</button>
+        <button data-filtre="favoris" aria-pressed="false">♥ Favoris</button>
+      </div>
+      <p class="petit" id="idees-compte"></p>
+      <div class="idees" id="liste-idees"></div>
+      <div class="bloc" id="bloc-mes-plats">
+        <h3>Mes plats</h3>
+        <p class="petit" id="aucun-plat">Touchez un plat de la semaine pour le mettre en ♥ favori ou ne plus le voir.</p>
+        <div id="liste-favoris" class="puces"></div>
+        <div id="liste-bannies" class="puces"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="vue" id="vue-courses" aria-labelledby="t-courses" hidden>
+    <div class="titre-vue"><h2 id="t-courses">Courses</h2></div>
+    <div class="pile">
+      <p class="petit" style="margin:0">Ce qui manque pour les menus, rangé par rayon.</p>
+      <div class="actions-courses">
+        <button class="principal" id="partager">Envoyer la liste</button>
+        <button class="secondaire" id="copier">Copier</button>
+      </div>
+      <div id="rayons" class="contenu" style="padding:0"></div>
+      <button class="secondaire" id="courses-faites" disabled>J'ai fait les courses : ranger les articles cochés</button>
+      <p class="petit" id="copie" aria-live="polite"></p>
+      <textarea id="texte-courses" hidden readonly aria-label="Liste à copier"></textarea>
+    </div>
+  </section>
 </div>
+
+<nav class="onglets" aria-label="Navigation">
+  <button data-vue="semaine" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>Semaine</button>
+  <button data-vue="ingredients"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9h14l-1.2 10.2a2 2 0 0 1-2 1.8H8.2a2 2 0 0 1-2-1.8z"/><path d="M9 9V7a3 3 0 0 1 6 0v2"/></svg>Ingrédients<span class="compte" id="n-placard">0</span></button>
+  <button data-vue="idees"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg>Idées</button>
+  <button data-vue="courses"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2.2 11h11l2-8H6.2"/><circle cx="9" cy="19.5" r="1.4"/><circle cx="17" cy="19.5" r="1.4"/></svg>Courses<span class="compte" id="n-courses">0</span></button>
+</nav>
 
 <button class="fab" id="ouvrir-scan" aria-haspopup="dialog"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Scanner un ticket</button>
 
@@ -236,45 +335,6 @@
   </div>
 </div>
 
-<!-- Feuille : placard -->
-<div class="voile" id="f-placard" hidden>
-  <div class="feuille" role="dialog" aria-modal="true" aria-labelledby="t-placard">
-    <header><h2 id="t-placard">Placard</h2><button class="fermer" data-fermer>Fermer</button></header>
-    <div class="contenu">
-      <div class="bloc">
-        <h3>Ajouter un ingrédient</h3>
-        <input id="cherche-ingredient" type="search" autocomplete="off" placeholder="Tapez : poulet, riz, tomates…" aria-label="Chercher un ingrédient à ajouter">
-        <div class="suggestions" id="suggestions" aria-live="polite"></div>
-      </div>
-      <div class="bloc">
-        <h3>Dans mon placard</h3>
-        <ul class="liste" id="liste-reconnus"></ul>
-      </div>
-      <div class="bloc" id="bloc-inconnus">
-        <h3>Lignes du ticket non reconnues</h3>
-        <p class="petit">Choisissez l'ingrédient, ou laissez « ignorer ».</p>
-        <ul class="liste inconnus" id="liste-inconnus"></ul>
-      </div>
-      <div class="bloc">
-        <h3>Réglages des menus</h3>
-        <div class="reglages">
-          <label>Jours <input type="number" id="nb-jours" min="1" max="14" value="7"></label>
-          <label><input type="checkbox" id="midi" checked> Midi</label>
-          <label><input type="checkbox" id="soir" checked> Soir</label>
-          <label><input type="checkbox" id="vegetarien"> Végétarien</label>
-        </div>
-        <button class="secondaire" id="remettre" hidden>Remettre les plats changés cette semaine</button>
-      </div>
-      <div class="bloc" id="bloc-mes-plats">
-        <h3>Mes plats</h3>
-        <p class="petit" id="aucun-plat">Touchez un plat de la semaine pour le mettre en ♥ favori ou ne plus le voir.</p>
-        <div id="liste-favoris" class="puces"></div>
-        <div id="liste-bannies" class="puces"></div>
-      </div>
-      <button class="secondaire" id="vider">Vider le placard</button>
-    </div>
-  </div>
-</div>
 
 <!-- Feuille : installer -->
 <div class="voile" id="f-installer" hidden>
@@ -367,23 +427,7 @@
   </div>
 </div>
 
-<!-- Feuille : courses -->
-<div class="voile" id="f-courses" hidden>
-  <div class="feuille" role="dialog" aria-modal="true" aria-labelledby="t-courses">
-    <header><h2 id="t-courses">Courses</h2><button class="fermer" data-fermer>Fermer</button></header>
-    <div class="contenu">
-      <p class="petit">Ce qui manque pour les menus, rangé par rayon.</p>
-      <div id="rayons" class="contenu" style="padding:0"></div>
-      <div class="actions-courses">
-        <button class="principal" id="partager">Envoyer la liste</button>
-        <button class="secondaire" id="copier">Copier</button>
-      </div>
-      <button class="secondaire" id="courses-faites" disabled>J'ai fait les courses : ranger les articles cochés</button>
-      <p class="petit" id="copie" aria-live="polite"></p>
-      <textarea id="texte-courses" hidden readonly aria-label="Liste à copier"></textarea>
-    </div>
-  </div>
-</div>
+
 
 <script src="moteur.js"></script>
 <script src="vendor/tesseract.min.js"></script>
@@ -466,7 +510,8 @@ function recalculer() {
 function toutDessiner() {
   const vide = !etat.articles.length;
   $("accueil").hidden = !vide; $("planning").hidden = vide; $("bandeau-exemple").hidden = !etat.exemple;
-  dessinerResume(); dessinerRuban(); dessinerJour(); dessinerPlacard(); dessinerCourses(); sauver(); }
+  dessinerResume(); dessinerRuban(); dessinerJour(); dessinerPlacard(); dessinerCourses(); dessinerIdees(); sauver();
+  $("ouvrir-scan").hidden = !(!$("vue-semaine").hidden && etat.articles.length); }
 
 function dessinerResume() {
   const { menus, courses } = etat.resultat;
@@ -497,7 +542,7 @@ function dessinerJour() {
   const liste = $("repas"); liste.replaceChildren();
   $("titre-jour").textContent = fmt(dateDu(etat.jour), { weekday: "long", day: "numeric", month: "long" });
   const menus = etat.resultat.menus.filter((m) => m.jour === etat.jour);
-  if (!menus.length) { liste.append(el("p", { class: "vide", texte: "Aucun repas : cochez midi ou soir dans le Placard." })); return; }
+  if (!menus.length) { liste.append(el("p", { class: "vide", texte: "Aucun repas : cochez midi ou soir dans les réglages ci-dessous." })); return; }
   for (const m of menus) {
     const p = el("div", { class: "pastilles" }, ...pastilles(m.utilises, "la"), ...pastilles(m.manquants, "acheter"));
     const rec = RECETTES[m.recette] || {};
@@ -589,8 +634,53 @@ function ouvrirScan(depuis) {
   ouvrir("f-scan", depuis);
 }
 $("ouvrir-scan").addEventListener("click", (e) => ouvrirScan(e.currentTarget));
-$("ouvrir-placard").addEventListener("click", (e) => ouvrir("f-placard", e.currentTarget));
-$("ouvrir-courses").addEventListener("click", (e) => ouvrir("f-courses", e.currentTarget));
+
+// ---- Onglets
+const VUES = ["semaine", "ingredients", "idees", "courses"];
+function aller(vue, garderDefilement) {
+  if (!VUES.includes(vue)) vue = "semaine";
+  for (const v of VUES) $("vue-" + v).hidden = v !== vue;
+  for (const b of document.querySelectorAll(".onglets button")) b.toggleAttribute("aria-current", b.dataset.vue === vue);
+  for (const b of document.querySelectorAll(".onglets button")) if (b.dataset.vue === vue) b.setAttribute("aria-current", "page");
+  $("ouvrir-scan").hidden = !(vue === "semaine" && etat.articles.length);
+  if (location.hash !== "#" + vue) history.replaceState(null, "", "#" + vue);
+  if (!garderDefilement) window.scrollTo(0, 0);
+}
+for (const b of document.querySelectorAll(".onglets button")) b.addEventListener("click", () => aller(b.dataset.vue));
+window.addEventListener("hashchange", () => aller(location.hash.slice(1)));
+$("scan-ingredients").addEventListener("click", (e) => ouvrirScan(e.currentTarget));
+
+// ---- Idées de recettes
+const filtres = { possible: false, rapide: false, vegetarien: false, favoris: false };
+for (const b of document.querySelectorAll(".filtres button")) b.addEventListener("click", () => {
+  filtres[b.dataset.filtre] = !filtres[b.dataset.filtre];
+  b.setAttribute("aria-pressed", String(filtres[b.dataset.filtre])); dessinerIdees();
+});
+$("cherche-recette").addEventListener("input", () => dessinerIdees());
+function dessinerIdees() {
+  const dispo = new Set(etat.articles.map((a) => a.ingredient).filter(Boolean));
+  const q = C.normaliser($("cherche-recette").value);
+  const lignes = C.RECETTES.filter((rec) => !etat.bannies.includes(rec.id)).map((rec) => {
+    const la = rec.ingredients.filter((id) => dispo.has(id));
+    return { rec, la, manque: rec.ingredients.filter((id) => !dispo.has(id)), part: la.length / rec.ingredients.length };
+  }).filter(({ rec, manque }) =>
+    (!filtres.possible || !manque.length) && (!filtres.rapide || rec.temps <= 30) &&
+    (!filtres.vegetarien || C.estVegetarienne(rec)) && (!filtres.favoris || etat.favoris.includes(rec.id)) &&
+    (!q || C.normaliser(rec.nom).includes(q) || rec.ingredients.concat(rec.options).some((id) => C.normaliser(PAR_ID[id].nom).includes(q))))
+    .sort((a, b) => b.part - a.part || Number(etat.favoris.includes(b.rec.id)) - Number(etat.favoris.includes(a.rec.id)) || a.rec.temps - b.rec.temps || a.rec.nom.localeCompare(b.rec.nom, "fr"));
+  const zone = $("liste-idees"); zone.replaceChildren();
+  $("idees-compte").textContent = lignes.length
+    ? `${lignes.length} recette${lignes.length > 1 ? "s" : ""}` + (dispo.size ? ", celles qui utilisent le plus votre placard d'abord." : ". Ajoutez des ingrédients pour voir ce qui est possible.")
+    : "Aucune recette avec ces filtres.";
+  for (const { rec, la, manque } of lignes) {
+    const m = { recette: rec.id, nom: rec.nom, jour: null, repas: null, utilises: rec.ingredients.concat(rec.options).filter((id) => dispo.has(id)), manquants: manque };
+    const etatTexte = !manque.length ? "Tout est là" : la.length ? `${la.length}/${rec.ingredients.length} déjà là · manque ${manque.map((id) => PAR_ID[id].nom.toLowerCase()).join(", ")}` : "Manque " + manque.map((id) => PAR_ID[id].nom.toLowerCase()).join(", ");
+    zone.append(el("button", { class: "idee" + (!manque.length ? " possible" : ""), onclick: (e) => ouvrirRecette(m, e.currentTarget) },
+      el("span", { class: "idee-nom", texte: (etat.favoris.includes(rec.id) ? "♥ " : "") + rec.nom }),
+      el("span", { class: "idee-infos", texte: `⏱ ${rec.temps} min${C.estVegetarienne(rec) ? " · végétarien" : ""}` }),
+      el("span", { class: "idee-etat", texte: etatTexte })));
+  }
+}
 $("ouvrir-installer").addEventListener("click", (e) => ouvrir("f-installer", e.currentTarget));
 
 // ---- Installation et hors ligne
@@ -672,7 +762,8 @@ function ouvrirRecette(m, depuis) {
   const rec = RECETTES[m.recette] || { ingredients: [], options: [] };
   $("t-recette").textContent = m.nom;
   const meta = $("recette-meta"); meta.replaceChildren();
-  meta.append(el("span", { texte: fmt(dateDu(m.jour), { weekday: "long" }) + " " + m.repas }));
+  if (m.jour !== null) meta.append(el("span", { texte: fmt(dateDu(m.jour), { weekday: "long" }) + " " + m.repas }));
+  $("recette-autre").hidden = m.jour === null;
   if (rec.temps) meta.append(el("span", { texte: "⏱ " + rec.temps + " min" }));
   if (C.estVegetarienne(rec)) meta.append(el("span", { texte: "végétarien" }));
   const ul = $("recette-ingredients"); ul.replaceChildren();
@@ -700,7 +791,7 @@ $("recette-autre").addEventListener("click", () => { etat.exclues.push(repasOuve
 let attenteBannir = null;
 $("recette-bannir").addEventListener("click", () => {
   if (!attenteBannir) {
-    $("recette-bannir").textContent = "Toucher encore pour confirmer (réversible dans le Placard)";
+    $("recette-bannir").textContent = "Toucher encore pour confirmer (réversible dans Idées)";
     attenteBannir = setTimeout(() => { $("recette-bannir").textContent = "Ne plus me proposer ce plat"; attenteBannir = null; }, 4000); return;
   }
   clearTimeout(attenteBannir); attenteBannir = null;
@@ -755,7 +846,7 @@ $("copier").addEventListener("click", async () => {
 const EXEMPLE = "SUPERMARCHE FICTIF\n12 RUE DE L'EXEMPLE 75000 PARIS\nTEL 01 00 00 00 00\n02/11/2026 18:42 CAISSE 3\nBLC POULET X2 400G      5,49 A\nPATES SPAGHETTI 500G    0,89 A\nLARDONS FUMES 2X100G    2,15 A\nOEUFS PLEIN AIR X12     3,20 A\n2 X 1,05\nYAOURT NATURE X4        2,10 A\nCOURGETTES\n0,856 KG X 2,49 €/KG    2,13 A\nTOMATES GRAPPE          2,79 A\nCHAMPIGNONS PARIS 250G  1,59 A\nSALADE BATAVIA          0,99 A\nCREME FRAICHE EPAISSE   1,45 A\nLAITUE ICEBERG          0,89 A\nPAPIER TOILETTE X6      3,49 B\nREMISE FIDELITE        -0,50\nTOTAL                  26,66\nCB                     26,66\nMERCI DE VOTRE VISITE\n";
 // Premier lancement : page vierge. L'exemple ne se charge qu'à la demande.
 $("accueil-scan").addEventListener("click", (e) => ouvrirScan(e.currentTarget));
-$("accueil-placard").addEventListener("click", (e) => ouvrir("f-placard", e.currentTarget));
+$("accueil-placard").addEventListener("click", () => { aller("ingredients"); $("cherche-ingredient").focus(); });
 $("accueil-exemple").addEventListener("click", () => { $("texte").value = EXEMPLE; utiliserTexte(EXEMPLE, true); });
 $("effacer-exemple").addEventListener("click", () => {
   etat.articles = []; etat.exclues = []; etat.coches = []; etat.exemple = false; $("texte").value = ""; $("bilan").textContent = ""; recalculer();
@@ -831,6 +922,7 @@ chargerProfils();
 afficherProfil();
 if (profils.actif) charger();
 recalculer();
+aller(location.hash.slice(1), true);
 if (!profils.actif) demanderPremierProfil();
 </script>
 </body>
