@@ -1,0 +1,15 @@
+name: tests
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node --test
+      - name: Chaque fichier gardé hors ligne existe
+        run: node -e 'const s=require("fs").readFileSync("sw.js","utf8");const l=JSON.parse(s.match(/FICHIERS = (\[[\s\S]*?\]);/)[1].replace(/,\s*\]/,"]"));for(const f of l){if(f!=="./"&&!require("fs").existsSync(f)){console.error("absent:",f);process.exit(1)}}console.log(l.length,"fichiers ok")'

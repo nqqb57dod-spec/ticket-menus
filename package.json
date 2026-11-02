@@ -1,0 +1,7 @@
+{
+  "name": "ticket-menus",
+  "private": true,
+  "description": "Semaine en cuisine : du ticket de caisse aux menus de la semaine.",
+  "scripts": { "test": "node --test" },
+  "license": "MIT"
+}

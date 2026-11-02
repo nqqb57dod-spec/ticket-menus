@@ -1,0 +1,512 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Semaine en cuisine</title>
+<meta name="description" content="Photographiez un ticket de caisse : l'app liste les ingrédients et propose les menus de la semaine.">
+<meta name="theme-color" content="#2c6a45" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#121a15" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icones/icone.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icones/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Cuisine">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<style>
+  @font-face { font-family: "Bricolage Grotesque"; src: url("polices/bricolage-grotesque-latin-wght-normal.woff2") format("woff2"); font-weight: 200 800; font-display: swap; }
+  @font-face { font-family: "Atkinson Hyperlegible"; src: url("polices/atkinson-hyperlegible-latin-400-normal.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+  @font-face { font-family: "Atkinson Hyperlegible"; src: url("polices/atkinson-hyperlegible-latin-700-normal.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+  /* Mise en page : le planning d'abord. Ruban de jours, grandes cartes de repas, feuilles pour le reste. */
+  :root {
+    --fond: #eef3ec;        /* feuille de basilic très pâle */
+    --surface: #ffffff;
+    --encre: #18261e;
+    --doux: #56675c;
+    --trait: #d3ddd2;
+    --basilic: #2c6a45;     /* accent principal */
+    --sur-basilic: #ffffff;
+    --la: #dff0e3;          /* pastille « déjà là » */
+    --la-texte: #1d5734;
+    --acheter: #fbe6c8;     /* pastille « à acheter » (safran) */
+    --acheter-texte: #8a4a06;
+    --ombre: 0 6px 24px rgba(24, 38, 30, .14);
+    --titre: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+    --corps: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --fond: #121a15; --surface: #1b251f; --encre: #e7efe9; --doux: #9fb0a5; --trait: #2e3b33;
+      --basilic: #6cc28f; --sur-basilic: #0c1a12; --la: #1f3a2a; --la-texte: #a6dfbb;
+      --acheter: #3d2c14; --acheter-texte: #f3c27a; --ombre: 0 6px 24px rgba(0, 0, 0, .45);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --fond: #121a15; --surface: #1b251f; --encre: #e7efe9; --doux: #9fb0a5; --trait: #2e3b33;
+    --basilic: #6cc28f; --sur-basilic: #0c1a12; --la: #1f3a2a; --la-texte: #a6dfbb;
+    --acheter: #3d2c14; --acheter-texte: #f3c27a; --ombre: 0 6px 24px rgba(0, 0, 0, .45);
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html { color-scheme: light; }
+  :root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+  body { margin: 0; -webkit-text-size-adjust: 100%; }
+  img { max-width: 100%; }
+  [hidden] { display: none !important; }
+  body { background: var(--fond); color: var(--encre); font: 17px/1.45 var(--corps); }
+  .page { max-width: 720px; margin: 0 auto; padding-block: 12px 120px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, summary:focus-visible, label.bouton:focus-within {
+    outline: 3px solid var(--basilic); outline-offset: 2px; }
+
+  /* En-tête */
+  .tete { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .tete h1 { font: 800 1.45rem/1.1 var(--titre); margin: 0; flex: 1 1 auto; letter-spacing: -.01em; text-wrap: balance; }
+  .outil { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--trait); background: var(--surface);
+    border-radius: 999px; padding: 7px 14px; font-weight: 700; font-size: .95rem; }
+  .outil .compte { background: var(--basilic); color: var(--sur-basilic); border-radius: 999px; padding: 0 7px; font-size: .8rem; font-variant-numeric: tabular-nums; }
+  .resume { margin: 10px 0 14px; color: var(--doux); font-size: .95rem; font-variant-numeric: tabular-nums; }
+  .resume strong { color: var(--encre); }
+
+  /* Ruban de jours */
+  .ruban { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 10px; scroll-snap-type: x mandatory; scrollbar-width: thin; }
+  .jour { flex: 0 0 auto; scroll-snap-align: start; min-width: 64px; border: 1px solid var(--trait); background: var(--surface);
+    border-radius: 14px; padding: 8px 10px; text-align: center; line-height: 1.15; }
+  .jour .nom { display: block; font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; color: var(--doux); }
+  .jour .num { display: block; font: 800 1.4rem/1.1 var(--titre); font-variant-numeric: tabular-nums; }
+  .jour .alerte { display: block; height: 6px; width: 6px; border-radius: 50%; margin: 4px auto 0; background: transparent; }
+  .jour .alerte.oui { background: var(--acheter-texte); }
+  .jour[aria-pressed="true"] { background: var(--basilic); border-color: var(--basilic); color: var(--sur-basilic); }
+  .jour[aria-pressed="true"] .nom { color: var(--sur-basilic); }
+
+  /* Repas du jour */
+  .titre-jour { font: 600 1.1rem/1.2 var(--titre); margin: 8px 0 10px; text-transform: capitalize; }
+  .repas { display: grid; gap: 12px; }
+  .carte { background: var(--surface); border-radius: 18px; padding: 16px; box-shadow: var(--ombre); display: grid; gap: 10px; }
+  .moment { font-size: .78rem; text-transform: uppercase; letter-spacing: .08em; color: var(--doux); font-weight: 700; }
+  .plat { font: 800 1.45rem/1.15 var(--titre); margin: 0; text-wrap: balance; }
+  .pastilles { display: flex; flex-wrap: wrap; gap: 6px; }
+  .pastille { border-radius: 999px; padding: 3px 10px; font-size: .88rem; }
+  .pastille.la { background: var(--la); color: var(--la-texte); }
+  .pastille.acheter { background: var(--acheter); color: var(--acheter-texte); }
+  .legende { font-size: .8rem; color: var(--doux); }
+  .autre { justify-self: start; border: 1px solid var(--trait); background: transparent; border-radius: 10px; padding: 6px 12px; font-size: .9rem; }
+  .note { font-size: .85rem; color: var(--doux); margin-top: 16px; }
+  .vide { color: var(--doux); font-style: italic; }
+
+  /* Bouton flottant */
+  .fab { position: fixed; right: calc(16px + env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    background: var(--basilic); color: var(--sur-basilic); border: 0; border-radius: 999px; padding: 14px 20px; font-weight: 700;
+    box-shadow: var(--ombre); display: inline-flex; gap: 8px; align-items: center; z-index: 5; }
+
+  /* Feuilles */
+  .voile { position: fixed; inset: 0; background: rgba(10, 18, 13, .45); z-index: 20; display: flex; justify-content: flex-end; }
+  .feuille { background: var(--fond); width: min(100%, 520px); height: 100%; overflow-y: auto; display: flex; flex-direction: column;
+    padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .feuille.pleine { width: 100%; }
+  .feuille header { position: sticky; top: 0; background: var(--fond); display: flex; align-items: center; gap: 8px; z-index: 1;
+    padding-block: 14px 10px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+    border-bottom: 1px solid var(--trait); }
+  .feuille header h2 { font: 800 1.25rem/1.2 var(--titre); margin: 0; flex: 1; }
+  .fermer { border: 1px solid var(--trait); background: var(--surface); border-radius: 999px; padding: 6px 14px; }
+  .contenu { padding-block: 14px 24px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+    display: grid; gap: 14px; max-width: 720px; width: 100%; margin: 0 auto; }
+  .bloc { background: var(--surface); border-radius: 14px; padding: 14px; display: grid; gap: 10px; }
+  .bloc h3 { margin: 0; font: 600 1rem/1.2 var(--titre); }
+  .principal { background: var(--basilic); color: var(--sur-basilic); border: 0; border-radius: 12px; padding: 12px 16px; font-weight: 700; text-align: center; }
+  .secondaire { background: var(--surface); border: 1px solid var(--trait); border-radius: 12px; padding: 10px 14px; }
+  .principal:disabled { opacity: .5; cursor: default; }
+  .bouton { display: block; }
+  input[type="file"] { position: absolute; width: 1px; height: 1px; opacity: 0; }
+  input, select, textarea { font: inherit; color: var(--encre); background: var(--fond); border: 1px solid var(--trait); border-radius: 8px; padding: 6px 8px; }
+  textarea { width: 100%; min-height: 160px; font: 14px/1.4 ui-monospace, Menlo, monospace; }
+  progress { width: 100%; accent-color: var(--basilic); }
+  img.apercu { max-width: 100%; max-height: 240px; border-radius: 10px; justify-self: center; }
+  details summary { cursor: pointer; font-weight: 700; }
+  .petit { font-size: .85rem; color: var(--doux); }
+  .reglages { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; }
+  .reglages input[type="number"] { width: 4em; }
+  .liste { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+  .liste li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--trait); }
+  .liste li:last-child { border-bottom: 0; }
+  .liste .lib { min-width: 0; }
+  .liste .lib small { display: block; color: var(--doux); font-size: .78rem; overflow-wrap: anywhere; }
+  .liste input[type="number"] { width: 3.6em; }
+  .liste select { max-width: 100%; min-width: 0; }
+  .liste.inconnus li { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; }
+  .suppr { border: 0; background: transparent; color: var(--doux); padding: 4px 8px; font-size: 1.1rem; }
+  .etapes { margin: 0; padding-left: 1.3em; display: grid; gap: 4px; }
+  .rayon h3 { font: 600 .82rem/1.2 var(--corps); text-transform: uppercase; letter-spacing: .07em; color: var(--doux); margin: 0 0 4px; }
+  .courses { list-style: none; padding: 0; margin: 0; }
+  .courses label { display: flex; gap: 10px; align-items: baseline; padding: 6px 0; }
+  .courses input { width: 1.1em; height: 1.1em; accent-color: var(--basilic); }
+  .courses .quand { margin-left: auto; font-size: .8rem; color: var(--doux); white-space: nowrap; }
+  .courses .coche span:first-of-type { text-decoration: line-through; color: var(--doux); }
+  @media (prefers-reduced-motion: no-preference) {
+    .feuille { animation: entree .22s ease-out; }
+    @keyframes entree { from { transform: translateX(24px); } to { transform: none; } }
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <div class="tete">
+    <h1>Semaine en cuisine</h1>
+    <button class="outil" id="ouvrir-placard" aria-haspopup="dialog">Placard <span class="compte" id="n-placard">0</span></button>
+    <button class="outil" id="ouvrir-courses" aria-haspopup="dialog">Courses <span class="compte" id="n-courses">0</span></button>
+  </div>
+  <p class="resume" id="resume"></p>
+  <nav class="ruban" id="ruban" aria-label="Jours de la semaine"></nav>
+  <h2 class="titre-jour" id="titre-jour"></h2>
+  <div class="repas" id="repas"></div>
+  <p class="legende"><span class="pastille la">vert</span> déjà acheté · <span class="pastille acheter">safran</span> à acheter</p>
+  <p class="note" id="note"></p>
+  <p class="note"><button class="autre" id="ouvrir-installer" aria-haspopup="dialog">Installer sur mon téléphone</button></p>
+</div>
+
+<button class="fab" id="ouvrir-scan" aria-haspopup="dialog"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Scanner un ticket</button>
+
+<!-- Feuille : scanner -->
+<div class="voile" id="f-scan" hidden>
+  <div class="feuille pleine" role="dialog" aria-modal="true" aria-labelledby="t-scan">
+    <header><h2 id="t-scan">Scanner un ticket</h2><button class="fermer" data-fermer>Fermer</button></header>
+    <div class="contenu">
+      <div class="bloc">
+        <label class="bouton principal" for="photo">Prendre ou choisir une photo</label>
+        <input type="file" id="photo" accept="image/*" capture="environment">
+        <img class="apercu" id="apercu" alt="Photo du ticket" hidden>
+        <button class="secondaire" id="lire" disabled>Lire le ticket</button>
+        <div id="progression" hidden><progress id="barre" max="1" value="0"></progress></div>
+        <p class="petit" id="etat-ocr">Ticket à plat, bien éclairé. La photo reste sur votre appareil.</p>
+      </div>
+      <details class="bloc" id="details-texte">
+        <summary>Texte lu (à corriger ou à coller)</summary>
+        <textarea id="texte" aria-label="Texte du ticket"></textarea>
+      </details>
+      <button class="principal" id="utiliser">Utiliser ces ingrédients</button>
+      <p class="petit" id="bilan"></p>
+    </div>
+  </div>
+</div>
+
+<!-- Feuille : placard -->
+<div class="voile" id="f-placard" hidden>
+  <div class="feuille" role="dialog" aria-modal="true" aria-labelledby="t-placard">
+    <header><h2 id="t-placard">Placard</h2><button class="fermer" data-fermer>Fermer</button></header>
+    <div class="contenu">
+      <div class="bloc">
+        <h3>Réglages des menus</h3>
+        <div class="reglages">
+          <label>Jours <input type="number" id="nb-jours" min="1" max="14" value="7"></label>
+          <label><input type="checkbox" id="midi" checked> Midi</label>
+          <label><input type="checkbox" id="soir" checked> Soir</label>
+          <label><input type="checkbox" id="vegetarien"> Végétarien</label>
+        </div>
+        <button class="secondaire" id="remettre" hidden>Remettre les plats écartés</button>
+      </div>
+      <div class="bloc">
+        <h3>Ingrédients achetés</h3>
+        <ul class="liste" id="liste-reconnus"></ul>
+        <div class="reglages">
+          <select id="choix-ajout" aria-label="Ingrédient à ajouter"></select>
+          <button class="secondaire" id="ajouter">Ajouter</button>
+        </div>
+      </div>
+      <div class="bloc" id="bloc-inconnus">
+        <h3>Lignes non reconnues</h3>
+        <p class="petit">Choisissez l'ingrédient, ou laissez « ignorer ».</p>
+        <ul class="liste inconnus" id="liste-inconnus"></ul>
+      </div>
+      <button class="secondaire" id="vider">Vider le placard</button>
+    </div>
+  </div>
+</div>
+
+<!-- Feuille : installer -->
+<div class="voile" id="f-installer" hidden>
+  <div class="feuille" role="dialog" aria-modal="true" aria-labelledby="t-installer">
+    <header><h2 id="t-installer">Installer l'app</h2><button class="fermer" data-fermer>Fermer</button></header>
+    <div class="contenu">
+      <div class="bloc" id="installer-direct" hidden>
+        <p>Ce navigateur peut l'installer directement.</p>
+        <button class="principal" id="installer">Installer</button>
+      </div>
+      <div class="bloc">
+        <h3>iPhone ou iPad</h3>
+        <ol class="etapes"><li>Ouvrez cette page dans <strong>Safari</strong>.</li><li>Touchez <strong>Partager</strong> (le carré avec une flèche).</li><li>Choisissez <strong>Sur l'écran d'accueil</strong>, puis <strong>Ajouter</strong>.</li></ol>
+      </div>
+      <div class="bloc">
+        <h3>Android</h3>
+        <ol class="etapes"><li>Ouvrez cette page dans <strong>Chrome</strong>.</li><li>Menu <strong>⋮</strong>, puis <strong>Installer l'application</strong> (ou « Ajouter à l'écran d'accueil »).</li></ol>
+      </div>
+      <div class="bloc">
+        <h3>Ordinateur Windows ou Mac</h3>
+        <ol class="etapes"><li>Ouvrez cette page dans <strong>Edge</strong> ou <strong>Chrome</strong>.</li><li>Cliquez sur l'icône <strong>Installer</strong> à droite de la barre d'adresse.</li></ol>
+      </div>
+      <p class="petit">Après la première ouverture, l'app marche sans réseau. Vos ingrédients et menus restent sur cet appareil.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Feuille : courses -->
+<div class="voile" id="f-courses" hidden>
+  <div class="feuille" role="dialog" aria-modal="true" aria-labelledby="t-courses">
+    <header><h2 id="t-courses">Courses</h2><button class="fermer" data-fermer>Fermer</button></header>
+    <div class="contenu">
+      <p class="petit">Ce qui manque pour les menus, rangé par rayon.</p>
+      <div id="rayons" class="contenu" style="padding:0"></div>
+      <button class="principal" id="copier">Copier la liste</button>
+      <p class="petit" id="copie"></p>
+      <textarea id="texte-courses" hidden readonly aria-label="Liste à copier"></textarea>
+    </div>
+  </div>
+</div>
+
+<script src="moteur.js"></script>
+<script src="vendor/tesseract.min.js"></script>
+<script>
+"use strict";
+const C = window.Courses;
+const $ = (id) => document.getElementById(id);
+const CLE = "semaine-en-cuisine-v1";
+const PAR_ID = Object.fromEntries(C.INGREDIENTS.map((i) => [i.id, i]));
+const TRIES = C.INGREDIENTS.slice().sort((a, b) => a.nom.localeCompare(b.nom, "fr"));
+const RAYONS = [
+  ["legume", "Fruits et légumes"], ["fruit", "Fruits et légumes"], ["viande", "Boucherie"], ["poisson", "Poissonnerie"],
+  ["cremerie", "Crèmerie"], ["boulangerie", "Boulangerie"], ["epicerie", "Épicerie"],
+];
+const NOM_RAYON = Object.fromEntries(RAYONS);
+const ORDRE_RAYONS = [...new Set(RAYONS.map((r) => r[1]))];
+const etat = { articles: [], exclues: [], jour: 0, coches: [], exemple: false, resultat: null };
+
+function el(balise, attributs = {}, ...enfants) {
+  const n = document.createElement(balise);
+  for (const [k, v] of Object.entries(attributs)) {
+    if (k === "texte") n.textContent = v;
+    else if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
+    else if (v !== false && v != null) n.setAttribute(k, v === true ? "" : v);
+  }
+  for (const e of enfants) n.append(e);
+  return n;
+}
+function sauver() {
+  try {
+    localStorage.setItem(CLE, JSON.stringify({
+      articles: etat.articles, exclues: etat.exclues, coches: etat.coches, exemple: etat.exemple, texte: $("texte").value,
+      reglages: { jours: $("nb-jours").value, midi: $("midi").checked, soir: $("soir").checked, vegetarien: $("vegetarien").checked },
+    }));
+  } catch (e) { /* stockage indisponible */ }
+}
+function charger() {
+  try {
+    const d = JSON.parse(localStorage.getItem(CLE) || "null");
+    if (!d) return false;
+    Object.assign(etat, { articles: d.articles || [], exclues: d.exclues || [], coches: d.coches || [], exemple: Boolean(d.exemple) });
+    $("texte").value = d.texte || "";
+    if (d.reglages) {
+      $("nb-jours").value = d.reglages.jours || 7; $("midi").checked = d.reglages.midi !== false;
+      $("soir").checked = d.reglages.soir !== false; $("vegetarien").checked = Boolean(d.reglages.vegetarien);
+    }
+    return true;
+  } catch (e) { return false; }
+}
+
+// ---- Dates
+function dateDu(decalage) { const d = new Date(); d.setHours(12, 0, 0, 0); d.setDate(d.getDate() + decalage); return d; }
+const fmt = (d, o) => d.toLocaleDateString("fr-FR", o);
+
+// ---- Calcul
+function recalculer() {
+  const repas = [$("midi").checked && "midi", $("soir").checked && "soir"].filter(Boolean);
+  const jours = Math.min(14, Math.max(1, Number($("nb-jours").value) || 7));
+  etat.resultat = repas.length
+    ? C.proposerMenus(etat.articles, { jours, repas, vegetarien: $("vegetarien").checked, exclues: etat.exclues })
+    : { menus: [], courses: [], restes: [] };
+  etat.jour = Math.min(etat.jour, jours - 1);
+  toutDessiner();
+}
+function toutDessiner() { dessinerResume(); dessinerRuban(); dessinerJour(); dessinerPlacard(); dessinerCourses(); sauver(); }
+
+function dessinerResume() {
+  const { menus, courses } = etat.resultat;
+  const utilises = new Set(menus.flatMap((m) => m.utilises.filter((id) => etat.articles.some((a) => a.ingredient === id))));
+  const r = $("resume"); r.replaceChildren();
+  r.append(el("strong", { texte: `${menus.length} repas` }), ` · ${utilises.size} ingrédients du placard utilisés · `,
+    el("strong", { texte: `${courses.length} achats à prévoir` }));
+  $("n-placard").textContent = etat.articles.filter((a) => a.ingredient).length;
+  $("n-courses").textContent = courses.length;
+  $("note").textContent = etat.exemple ? "Exemple FICTIF : scannez votre ticket pour le remplacer." : "";
+}
+function dessinerRuban() {
+  const ruban = $("ruban"); ruban.replaceChildren();
+  const jours = new Set(etat.resultat.menus.map((m) => m.jour));
+  for (const j of [...jours].sort((a, b) => a - b)) {
+    const d = dateDu(j);
+    const achat = etat.resultat.menus.some((m) => m.jour === j && m.manquants.length);
+    ruban.append(el("button", { class: "jour", "aria-pressed": String(j === etat.jour), "aria-label": fmt(d, { weekday: "long", day: "numeric", month: "long" }),
+      onclick: () => { etat.jour = j; dessinerRuban(); dessinerJour(); } },
+      el("span", { class: "nom", texte: j === 0 ? "auj." : fmt(d, { weekday: "short" }).replace(".", "") }),
+      el("span", { class: "num", texte: String(d.getDate()) }),
+      el("span", { class: "alerte" + (achat ? " oui" : ""), title: achat ? "Des achats à prévoir" : "" })));
+  }
+  const actif = ruban.querySelector('[aria-pressed="true"]');
+  if (actif) actif.scrollIntoView({ block: "nearest", inline: "nearest" });
+}
+function pastilles(ids, classe) { return ids.map((id) => el("span", { class: "pastille " + classe, texte: PAR_ID[id].nom })); }
+function dessinerJour() {
+  const liste = $("repas"); liste.replaceChildren();
+  $("titre-jour").textContent = fmt(dateDu(etat.jour), { weekday: "long", day: "numeric", month: "long" });
+  const menus = etat.resultat.menus.filter((m) => m.jour === etat.jour);
+  if (!menus.length) { liste.append(el("p", { class: "vide", texte: "Aucun repas : cochez midi ou soir dans le Placard." })); return; }
+  for (const m of menus) {
+    const p = el("div", { class: "pastilles" }, ...pastilles(m.utilises, "la"), ...pastilles(m.manquants, "acheter"));
+    liste.append(el("article", { class: "carte" },
+      el("div", { class: "moment", texte: m.repas }), el("h3", { class: "plat", texte: m.nom }), p,
+      el("button", { class: "autre", texte: "↻ Autre idée", onclick: () => { etat.exclues.push(m.recette); recalculer(); } })));
+  }
+}
+function selectIngredient(valeur, surChange, vide) {
+  const s = el("select", { "aria-label": "Ingrédient", onchange: (e) => surChange(e.target.value || null) });
+  if (vide) s.append(el("option", { value: "", texte: vide }));
+  for (const i of TRIES) s.append(el("option", { value: i.id, texte: i.nom, selected: i.id === valeur }));
+  return s;
+}
+function dessinerPlacard() {
+  const reconnus = $("liste-reconnus"), inconnus = $("liste-inconnus");
+  reconnus.replaceChildren(); inconnus.replaceChildren();
+  etat.articles.forEach((a, i) => {
+    const suppr = el("button", { class: "suppr", "aria-label": "Retirer", texte: "✕", onclick: () => { etat.articles.splice(i, 1); recalculer(); } });
+    if (a.ingredient) {
+      reconnus.append(el("li", {},
+        el("span", { class: "lib" }, PAR_ID[a.ingredient].nom, a.libelle ? el("small", { texte: a.libelle }) : ""),
+        el("input", { type: "number", min: "1", max: "99", value: String(a.quantite || 1), "aria-label": "Quantité de " + PAR_ID[a.ingredient].nom,
+          onchange: (e) => { a.quantite = Math.max(1, Number(e.target.value) || 1); recalculer(); } }),
+        suppr));
+    } else {
+      inconnus.append(el("li", {}, el("span", { class: "lib", texte: a.libelle || "(ligne vide)" }),
+        selectIngredient(null, (v) => { a.ingredient = v; recalculer(); }, "— ignorer —"), suppr));
+    }
+  });
+  if (!reconnus.children.length) reconnus.append(el("li", { class: "vide", texte: "Rien pour l'instant. Scannez un ticket." }));
+  $("bloc-inconnus").hidden = !inconnus.children.length;
+  $("remettre").hidden = !etat.exclues.length;
+}
+function dessinerCourses() {
+  const zone = $("rayons"); zone.replaceChildren();
+  const { courses } = etat.resultat;
+  if (!courses.length) { zone.append(el("p", { class: "vide", texte: "Rien à acheter : tout est déjà là." })); return; }
+  for (const rayon of ORDRE_RAYONS) {
+    const lignes = courses.filter((c) => NOM_RAYON[PAR_ID[c.id].categorie] === rayon);
+    if (!lignes.length) continue;
+    const ul = el("ul", { class: "courses" });
+    for (const c of lignes) {
+      const coche = etat.coches.includes(c.id);
+      const label = el("label", { class: coche ? "coche" : "" },
+        el("input", { type: "checkbox", checked: coche, onchange: (e) => {
+          etat.coches = etat.coches.filter((x) => x !== c.id).concat(e.target.checked ? [c.id] : []);
+          label.className = e.target.checked ? "coche" : ""; sauver(); } }),
+        el("span", { texte: c.nom + (c.articles > 1 ? ` ×${c.articles}` : "") }),
+        el("span", { class: "quand", title: c.pour.join(", "), texte: "pour " + (c.jour === 0 ? "auj." : fmt(dateDu(c.jour), { weekday: "short" })) }));
+      ul.append(el("li", {}, label));
+    }
+    zone.append(el("section", { class: "bloc rayon" }, el("h3", { texte: rayon }), ul));
+  }
+}
+
+// ---- Feuilles
+let declencheur = null;
+function ouvrir(id, depuis) { declencheur = depuis; $(id).hidden = false; document.body.style.overflow = "hidden"; $(id).querySelector("[data-fermer]").focus(); }
+function fermer(voile) { voile.hidden = true; document.body.style.overflow = ""; if (declencheur) declencheur.focus(); }
+for (const v of document.querySelectorAll(".voile")) {
+  v.addEventListener("click", (e) => { if (e.target === v || e.target.hasAttribute("data-fermer")) fermer(v); });
+}
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") { const v = document.querySelector(".voile:not([hidden])"); if (v) fermer(v); } });
+$("ouvrir-scan").addEventListener("click", (e) => ouvrir("f-scan", e.currentTarget));
+$("ouvrir-placard").addEventListener("click", (e) => ouvrir("f-placard", e.currentTarget));
+$("ouvrir-courses").addEventListener("click", (e) => ouvrir("f-courses", e.currentTarget));
+$("ouvrir-installer").addEventListener("click", (e) => ouvrir("f-installer", e.currentTarget));
+
+// ---- Installation et hors ligne
+const installee = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+if (installee) $("ouvrir-installer").parentElement.hidden = true;
+let invite = null;
+window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); invite = e; $("installer-direct").hidden = false; });
+$("installer").addEventListener("click", async () => { if (!invite) return; invite.prompt(); await invite.userChoice; invite = null; $("installer-direct").hidden = true; });
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("sw.js").catch(() => { /* l'app marche aussi sans */ });
+}
+
+// ---- Scanner
+let image = null;
+$("photo").addEventListener("change", (ev) => {
+  image = ev.target.files[0] || null;
+  $("lire").disabled = !image;
+  if (image) { $("apercu").src = URL.createObjectURL(image); $("apercu").hidden = false; $("etat-ocr").textContent = "Photo prête. Touchez « Lire le ticket »."; }
+});
+// Tout ce qu'il faut pour lire le ticket est livré avec l'app (dossiers vendor/ et lang/).
+const ICI = (chemin) => new URL(chemin, location.href).href;
+const OPTIONS_LECTURE = { workerPath: ICI("vendor/worker.min.js"), corePath: ICI("vendor/"), langPath: ICI("lang"), workerBlobURL: false };
+$("lire").addEventListener("click", async () => {
+  if (!image) return;
+  if (!window.Tesseract) { $("etat-ocr").textContent = "Lecture indisponible. Collez le texte du ticket ci-dessous."; $("details-texte").open = true; return; }
+  $("lire").disabled = true; $("progression").hidden = false;
+  try {
+    const res = await Tesseract.recognize(image, "fra", {
+      ...OPTIONS_LECTURE,
+      logger: (m) => { $("barre").value = m.progress || 0; $("etat-ocr").textContent = m.status === "recognizing text" ? "Lecture du ticket…" : "Préparation…"; },
+    });
+    $("texte").value = res.data.text;
+    $("details-texte").open = true;
+    $("etat-ocr").textContent = "Lu. Vérifiez le texte si besoin, puis « Utiliser ces ingrédients ».";
+  } catch (e) {
+    $("etat-ocr").textContent = "La lecture a échoué (" + e.message + "). Collez le texte ci-dessous.";
+    $("details-texte").open = true;
+  } finally { $("lire").disabled = false; $("progression").hidden = true; }
+});
+function utiliserTexte(texte, exemple) {
+  const { articles, ignorees } = C.analyserTicket(texte);
+  etat.articles = articles.map(({ libelle, quantite, ingredient, prix }) => ({ libelle, quantite, ingredient, prix }));
+  etat.exclues = []; etat.coches = []; etat.jour = 0; etat.exemple = exemple;
+  const reconnus = articles.filter((a) => a.ingredient).length;
+  $("bilan").textContent = `${reconnus} ingrédients reconnus, ${articles.length - reconnus} à vérifier, ${ignorees.length} lignes ignorées.`;
+  recalculer();
+}
+$("utiliser").addEventListener("click", () => {
+  if (!$("texte").value.trim()) { $("bilan").textContent = "Aucun texte : prenez une photo ou collez le ticket."; $("details-texte").open = true; return; }
+  utiliserTexte($("texte").value, false);
+  fermer($("f-scan"));
+});
+
+// ---- Placard et réglages
+for (const id of ["nb-jours", "midi", "soir", "vegetarien"]) $(id).addEventListener("change", recalculer);
+$("remettre").addEventListener("click", () => { etat.exclues = []; recalculer(); });
+const choixAjout = $("choix-ajout");
+for (const i of TRIES) choixAjout.append(el("option", { value: i.id, texte: i.nom }));
+$("ajouter").addEventListener("click", () => {
+  etat.articles.push({ libelle: "", quantite: 1, ingredient: choixAjout.value, prix: null }); etat.exemple = false; recalculer();
+});
+let attente = null;
+$("vider").addEventListener("click", () => {
+  if (!attente) { $("vider").textContent = "Touchez encore pour confirmer"; attente = setTimeout(() => { $("vider").textContent = "Vider le placard"; attente = null; }, 4000); return; }
+  clearTimeout(attente); attente = null; $("vider").textContent = "Vider le placard";
+  etat.articles = []; etat.exemple = false; recalculer();
+});
+
+// ---- Courses
+$("copier").addEventListener("click", async () => {
+  const texte = etat.resultat.courses.map((c) => "- " + c.nom + (c.articles > 1 ? ` ×${c.articles}` : "")).join("\n");
+  try { await navigator.clipboard.writeText(texte); $("copie").textContent = "Liste copiée."; }
+  catch (e) { $("texte-courses").value = texte; $("texte-courses").hidden = false; $("texte-courses").select(); $("copie").textContent = "Copie bloquée ici : le texte est sélectionné, copiez-le à la main."; }
+});
+
+// ---- Démarrage
+const EXEMPLE = "SUPERMARCHE FICTIF\n12 RUE DE L'EXEMPLE 75000 PARIS\nTEL 01 00 00 00 00\n02/11/2026 18:42 CAISSE 3\nBLC POULET X2 400G      5,49 A\nPATES SPAGHETTI 500G    0,89 A\nLARDONS FUMES 2X100G    2,15 A\nOEUFS PLEIN AIR X12     3,20 A\n2 X 1,05\nYAOURT NATURE X4        2,10 A\nCOURGETTES\n0,856 KG X 2,49 €/KG    2,13 A\nTOMATES GRAPPE          2,79 A\nCHAMPIGNONS PARIS 250G  1,59 A\nSALADE BATAVIA          0,99 A\nCREME FRAICHE EPAISSE   1,45 A\nLAITUE ICEBERG          0,89 A\nPAPIER TOILETTE X6      3,49 B\nREMISE FIDELITE        -0,50\nTOTAL                  26,66\nCB                     26,66\nMERCI DE VOTRE VISITE\n";
+if (charger()) recalculer();
+else { $("texte").value = EXEMPLE; utiliserTexte(EXEMPLE, true); }
+</script>
+</body>
+</html>
