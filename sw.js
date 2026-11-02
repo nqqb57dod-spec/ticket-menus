@@ -1,6 +1,6 @@
 // Fonctionnement hors ligne : tous les fichiers de l'app sont gardés sur l'appareil.
 // Changer VERSION à chaque mise à jour pour que les téléphones récupèrent la nouvelle version.
-const VERSION = "cuisine-2026-11-02-5";
+const VERSION = "cuisine-2026-11-02-6";
 const FICHIERS = [
   "./", "index.html", "moteur.js", "manifest.webmanifest",
   "icones/icone.svg", "icones/icone-192.png", "icones/icone-512.png", "icones/icone-masquable-512.png", "icones/apple-touch-icon.png",

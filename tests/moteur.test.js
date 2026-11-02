@@ -158,3 +158,33 @@ test("mots-clés piégeux : le plus long l'emporte", () => {
   };
   for (const [libelle, attendu] of Object.entries(cas)) assert.equal(C.reconnaitre(libelle), attendu, libelle);
 });
+
+test("raviolis, quenelles et nuoc-mâm ne sont jamais comptés végétariens", () => {
+  for (const r of C.RECETTES) {
+    const tous = r.ingredients.concat(r.options);
+    if (tous.some((id) => ["raviolis", "quenelles", "sauce_poisson"].includes(id))) assert.equal(C.estVegetarienne(r), false, r.id);
+  }
+});
+
+test("chaque mot-clé de ticket mène à son ingrédient", () => {
+  const erreurs = [];
+  for (const i of C.INGREDIENTS) for (const mot of i.mots) {
+    const trouve = C.reconnaitre(mot);
+    if (trouve !== i.id) erreurs.push(`${mot} → ${trouve} (attendu ${i.id})`);
+  }
+  assert.deepEqual(erreurs, []);
+});
+
+test("grande base : au moins 500 recettes, 250 végétariennes, noms uniques", () => {
+  assert.ok(C.RECETTES.length >= 500, String(C.RECETTES.length));
+  assert.ok(C.RECETTES.filter((r) => C.estVegetarienne(r)).length >= 250);
+  const noms = C.RECETTES.map((r) => C.normaliser(r.nom));
+  assert.equal(new Set(noms).size, noms.length);
+});
+
+test("libellés de ticket des nouveaux ingrédients", () => {
+  const cas = { "GALETTES DE RIZ": "galettes_riz", "CITRON VERT X3": "citron_vert", "HARICOTS BLANCS 400G": "haricots_blancs",
+    "BLANC DE POULET": "poulet", "ROQUEFORT SOCIETE": "bleu", "NUOC MAM": "sauce_poisson", "BEURRE DOUX": "beurre",
+    "BEURRE CACAHUETE": "beurre_cacahuete", "MAQUEREAUX VIN BLANC": "maquereau", "PAIN PITA X6": "pain_pita" };
+  for (const [libelle, id] of Object.entries(cas)) assert.equal(C.reconnaitre(libelle), id, libelle);
+});

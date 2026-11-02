@@ -28,8 +28,8 @@ Quatre onglets en bas :
   étapes). **Autre idée** change le plat ; **♥** le met en favori (il revient plus souvent). Réglages : nombre de jours,
   midi/soir, végétarien.
 - **Ingrédients** : le placard. **Scanner un ticket** ajoute ses articles ; on peut aussi taper un ingrédient.
-- **Idées** : les 90 recettes, celles qu'on peut faire avec son placard d'abord. Filtres : possible maintenant,
-  rapide, végétarien, favoris. Un plat peut être écarté pour toujours, et remis plus tard.
+- **Idées** : plus de 500 recettes (cuisine française, végétarienne, du monde, rapide), celles qu'on peut faire avec son placard d'abord. Filtres : possible maintenant,
+  rapide, végétarien, cuisine du monde, favoris. Un plat peut être écarté pour toujours, et remis plus tard.
 - **Courses** : ce qui manque, rangé par rayon. **Envoyer la liste** (WhatsApp, SMS…). Cocher en magasin, puis
   **J'ai fait les courses** range les articles dans le placard et met les menus à jour.
 
